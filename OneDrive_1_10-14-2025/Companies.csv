@@ -1,0 +1,51 @@
+company_id,name,sectors,description,size
+2001,Barco NV,Technology,"Barco NV, headquartered in Kortrijk, is a global technology leader specializing in visualization and collaboration solutions such as projectors, video walls, and medical imaging systems. The company partners with UCLL to explore innovations in AI-driven image processing and human-computer interaction.",Small
+2002,Materialise NV,3D Printing,"Materialise NV, based in Leuven, pioneers in 3D printing technologies used in healthcare, automotive, and aerospace. Their collaboration with UCLL focuses on sustainable additive manufacturing processes and enhancing digital fabrication education.",Medium
+2003,Colruyt Group,Retail,"Colruyt Group is one of Belgium’s largest retail chains, emphasizing sustainability, efficiency, and innovation in logistics. Together with UCLL researchers, they explore AI-based supply chain optimization and sustainable packaging solutions.",Large
+2004,Umicore,Materials,"Umicore is a global materials technology and recycling company headquartered in Brussels. UCLL collaborates with Umicore on circular economy initiatives, focusing on metal recovery and sustainable battery technologies.",Large
+2005,VITO,Sustainability,"VITO drives sustainable innovation in energy, materials, and environmental technologies. UCLL and VITO co-develop projects on smart cities and sustainable energy management.",Small
+2006,Cronos Groep,IT Consulting,"Cronos Groep is one of Flanders’ largest IT consulting and innovation networks, connecting startups and enterprises. UCLL works with Cronos on AI education initiatives and applied data science projects.",Large
+2007,Van Hool,Automotive,"Van Hool, a Belgian bus and industrial vehicle manufacturer, collaborates with UCLL on electric mobility, hydrogen technologies, and sustainable transport systems.",Small
+2008,Telenet,Telecommunications,"Telenet, a leading telecom provider in Belgium, partners with UCLL on projects involving digital transformation, cybersecurity, and next-generation 5G applications for education and smart campuses.",Medium
+2009,Proximus,Telecommunications,"Proximus, Belgium’s largest telecommunications company, engages in joint research with UCLL to improve network efficiency and explore IoT solutions for public services and education.",Large
+2010,Bekaert,Steel Manufacturing,"Bekaert, headquartered in Zwevegem, is a global steel wire manufacturer. Their partnership with UCLL focuses on digital manufacturing optimization and predictive maintenance systems.",Large
+2011,UCB Pharma,Pharmaceuticals,"UCB Pharma is an international biopharmaceutical company based in Brussels, focusing on neurological and immunological diseases. Collaboration with UCLL centers on data-driven clinical research and healthcare analytics.",Small
+2012,Ablynx,Biotech,"Ablynx, now part of Sanofi, develops innovative nanobody-based medicines. UCLL supports Ablynx in bioinformatics and digital laboratory management projects.",Large
+2013,Melexis,Semiconductors,Melexis designs microelectronic semiconductor solutions for automotive and industrial applications. UCLL researchers collaborate on sensor calibration and embedded AI applications.,Large
+2014,EVS Broadcast Equipment,Broadcasting,"EVS Broadcast Equipment provides technology for live video production. Together with UCLL, they investigate real-time data streaming and machine learning applications for broadcast automation.",Small
+2015,Audi Brussels,Automotive,Audi Brussels manufactures electric vehicles and collaborates with UCLL on smart factory automation and workforce training for Industry 4.0.,Medium
+2016,Janssen Pharmaceutica,Pharmaceuticals,"Janssen Pharmaceutica, part of Johnson & Johnson, is a major pharmaceutical research center in Beerse. UCLL cooperates on clinical data management and digital health innovations.",Medium
+2017,Katoen Natie,Logistics,Katoen Natie is a logistics and engineering company focusing on efficient storage and supply chain innovation. UCLL contributes research on automation and AI in logistics optimization.,Medium
+2018,Fluxys,Energy,"Fluxys is Belgium’s gas transmission system operator. It collaborates with UCLL on sustainable energy transition research, particularly in hydrogen transport and grid monitoring.",Large
+2019,Elia Group,Energy,Elia Group manages Belgium’s high-voltage electricity grid. UCLL supports Elia with research on smart grid technologies and energy demand forecasting.,Medium
+2020,DEM Group,Construction,DEM Group supplies heavy machinery and partners with UCLL on training and safety solutions for construction and mining equipment operations.,Medium
+2021,Aertssen Group,Infrastructure,"Aertssen Group is active in construction, infrastructure, and logistics. UCLL and Aertssen collaborate on sustainable construction technologies and project management innovation.",Medium
+2022,Belfius Bank,Finance,Belfius Bank partners with UCLL on research into financial data security and responsible AI in digital banking systems.,Medium
+2023,KBC Group,Finance,KBC Group engages with UCLL to develop data analytics solutions for sustainable investment strategies and customer experience enhancement.,Small
+2024,ING Belgium,Finance,"ING Belgium collaborates with UCLL on fintech innovations, particularly in AI-driven fraud detection and customer service automation.",Medium
+2025,Van de Velde,Textiles,"Van de Velde, a lingerie manufacturer, works with UCLL on smart textiles and supply chain digitization research.",Medium
+2026,Etex Group,Construction Materials,Etex Group develops innovative building materials. UCLL’s research supports Etex in lifecycle assessment and green construction technologies.,Small
+2027,Luminus,Energy,Luminus collaborates with UCLL on renewable energy systems and smart home solutions for a more sustainable society.,Medium
+2028,De Lijn,Public Transport,"De Lijn, the Flemish public transport operator, works with UCLL on data analytics for route optimization and sustainability improvements.",Medium
+2029,Vandemoortele,Food Industry,"Vandemoortele, a food industry leader, partners with UCLL to explore energy-efficient manufacturing and circular food systems.",Small
+2030,TVH Group,Machinery,"TVH Group, a leader in material handling equipment, engages with UCLL in predictive maintenance and industrial IoT projects.",Medium
+2031,Sioen Industries,Textiles,Sioen Industries collaborates with UCLL on smart textiles and environmental impact reduction technologies.,Large
+2032,ArcelorMittal Belgium,Steel,ArcelorMittal Belgium works with UCLL to explore automation and sustainable steel production innovations.,Large
+2033,Daikin Europe,HVAC,Daikin Europe partners with UCLL on HVAC digitalization and smart energy control systems.,Large
+2034,Duracell Aarschot,Batteries,Duracell Aarschot cooperates with UCLL on battery performance optimization and circular design research.,Large
+2035,Siemens Belgium,Engineering,"Siemens Belgium collaborates with UCLL on industrial automation, AI, and sustainable manufacturing research.",Small
+2036,Cochlear Technology Center,Medical Devices,Cochlear Technology Center Belgium works with UCLL on human-centered design and accessibility innovation for hearing implants.,Medium
+2037,PwC Belgium,Consulting,PwC Belgium partners with UCLL to investigate the ethical application of AI in auditing and consulting.,Medium
+2038,Deloitte Belgium,Consulting,Deloitte Belgium collaborates with UCLL on digital transformation and data governance in enterprise systems.,Large
+2039,EY Belgium,Consulting,EY Belgium supports joint research with UCLL on responsible business innovation and data ethics.,Medium
+2040,Capgemini Belgium,IT Services,Capgemini Belgium works with UCLL on AI implementation in enterprise ecosystems and cybersecurity research.,Small
+2041,Cegeka,IT Services,Cegeka collaborates with UCLL on digital platforms for smart campuses and healthcare informatics.,Large
+2042,Ordina Belgium,IT Services,Ordina Belgium partners with UCLL to develop cloud-native solutions and promote software engineering excellence.,Small
+2043,Realdolmen,Healthcare,Realdolmen cooperates with UCLL on digital education tools and software innovation.,Large
+2044,CM - Christelijke Mutualiteit,Imaging Technology,CM - Christelijke Mutualiteit partners with UCLL to enhance digital health data systems and patient engagement analytics.,Large
+2045,Agfa-Gevaert,Technology,Agfa-Gevaert collaborates with UCLL on imaging technology and digital diagnostics research.,Small
+2046,BelfaTech Solutions,Healthcare,BelfaTech Solutions works with UCLL to explore AI and edge computing applications for industry.,Large
+2047,ZorgConnect Vlaanderen,Construction,ZorgConnect Vlaanderen partners with UCLL on telemedicine solutions and healthcare interoperability standards.,Large
+2048,InnoBuild Gent,Biotech,InnoBuild Gent develops sustainable construction methods and cooperates with UCLL on circular architecture research.,Medium
+2049,BioFuture Leuven,Education,BioFuture Leuven focuses on biotechnology startups and partners with UCLL for bioinformatics and innovation management training.,Small
+2050,EduTech Limburg,Energy,EduTech Limburg collaborates with UCLL to design adaptive learning technologies and educational AI systems.,Medium
