@@ -1,0 +1,46 @@
+flowchart TD
+  %% ===============================
+  %% K-means Clustering on Iris Data
+  %% ===============================
+
+  %% Inputs
+  A[Select X variable]:::input
+  B[Select Y variable]:::input
+  C[Select number of clusters]:::input
+
+  %% Source
+  D[(iris dataset)]:::source
+
+  %% Reactives
+  E>subset: iris, input$xvar, input$yvar]:::reactive
+  F>kmeans, centers = input$clusters]:::reactive
+
+  %% Output
+  G[[renderPlot: scatter plot with cluster colors]]:::output
+
+  %% Edges
+  D --> E
+  A --> E
+  B --> E
+  E --> F
+  C --> F
+  F --> G
+  E --> G
+
+  %% Legend
+  subgraph Legend
+    L1[input]
+    L2[(source)]
+    L3>reactive]
+    L4[[output]]
+    class L1 input
+    class L2 source
+    class L3 reactive
+    class L4 output
+  end
+
+  %% Class Definitions
+  classDef input fill:#E3F2FD,stroke:#90CAF9
+  classDef source fill:#FFF3E0,stroke:#FFB74D
+  classDef reactive fill:#E8F5E9,stroke:#81C784
+  classDef output fill:#F3E5F5,stroke:#BA68C8

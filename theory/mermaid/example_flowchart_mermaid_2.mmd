@@ -1,0 +1,59 @@
+flowchart LR
+ subgraph UI["UI_ui.R_fluidPage"]
+        I_date["dateInput id: date_range"]
+        I_cat["selectInput id: category"]
+        I_go["actionButton id: go"]
+  end
+ subgraph SERVER["Server_server.R"]
+        D_src[("DB/Table: sales")]
+        R_params["params"]
+        R_query["query"]
+        R_df["df_filtered"]
+        R_kpis["kpis"]
+        R_plotdata["plot_data"]
+        O_plot1[["renderPlot: sales_plot"]]
+        O_tbl[["renderDataTable: details_tbl"]]
+        O_val1[["renderText: total_rev"]]
+  end
+    I_date -- value --> R_params
+    I_cat -- value --> R_params
+    I_go -- trigger --> R_query
+    R_params -- {date, category} --> R_query
+    D_src -- dbRead() w/ params --> R_query
+    R_query -- tibble --> R_df
+    R_df -- summarize() --> R_kpis
+    R_df -- group_by()/mutate() --> R_plotdata
+    R_plotdata --> O_plot1
+    R_df --> O_tbl
+    R_kpis --> O_val1
+
+     I_date:::input
+     I_cat:::input
+     I_go:::input
+     D_src:::source
+     R_params:::reactive
+     R_query:::reactive
+     R_df:::reactive
+     R_kpis:::reactive
+     R_plotdata:::reactive
+     O_plot1:::output
+     O_tbl:::output
+     O_val1:::output
+    classDef input fill:#E3F2FD,stroke:#90CAF9,stroke-width:1px
+    classDef source fill:#FFF3E0,stroke:#FFB74D
+    classDef reactive fill:#E8F5E9,stroke:#81C784
+    classDef output fill:#F3E5F5,stroke:#BA68C8
+    style D_src stroke:#FF6D00
+
+  L1[input]
+  L2[(source)]
+  L3>reactive]
+  L4[[output]]
+  classDef input fill:#E3F2FD,stroke:#90CAF9
+  classDef source fill:#FFF3E0,stroke:#FFB74D
+  classDef reactive fill:#E8F5E9,stroke:#81C784
+  classDef output fill:#F3E5F5,stroke:#BA68C8
+  class L1 input
+  class L2 source
+  class L3 reactive
+  class L4 output
