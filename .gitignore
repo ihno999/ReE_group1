@@ -1,1 +1,2 @@
 # .gitignore for stuff that should not be committed to the repository
+.idea
