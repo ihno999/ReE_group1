@@ -32,6 +32,11 @@ Run the app with `R> runApp("./", launch.browser=FALSE, port = 8080)`
 Install package: `install.packages("package-name")`\
 Record the packages: `renv.snapshot()`
 
+## Diagram
+```mermaid
+
+```
+
 ## Folder structure
 Shiny (R) with renv:
 ```
