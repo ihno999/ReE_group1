@@ -14,25 +14,25 @@ flowchart TD
 %% Source
 %%  D[(iris dataset)]:::source
     rneDatabase[(rne database)]:::source
+    projectsFilteredByEndDate[("projects filtered by end date (researcher, department, company)")]:::source
+    BQ4A1_projectsPerCompany[(projects per company, desc)]:::source
+    BQ6A1_fteScorePerProject[(FTE score per project)]:::source
+    BQ6A2_groupByRole[(group by role)]:::source
 
 %% Reactives
 %%  E>subset: iris, input$xvar, input$yvar]:::reactive
 %%  F>kmeans, centers = input$clusters]:::reactive
-    projectsFilteredByEndDate>projects filtered by end date]:::reactive
+    rneDatabase --> projectsFilteredByEndDate
 
-    BQ2A1_projectsFilteredByEndDateAndCountSharedProjects>projects filtered by end_date and counted shared projects per researcher]:::reactive
-    BQ2A2_projectsFilteredByEndDateAndCountSharedProjectsAndRankIt>projects filtered by end_date and counted shared projects per researcher, ranked]:::reactive
+    BQ2A1_projectsFilteredByEndDateAndCountSharedProjects>count shared projects per researcher]:::reactive
+    BQ2A2_projectsFilteredByEndDateAndCountSharedProjectsAndRankIt>count shared projects per researcher, ranked]:::reactive
 
-    BQ3A1_projectsFilteredByEndDateJoinWithResearchersAndCompanies>projects filtered by end date, joined with researchers and companies]:::reactive
-    BQ3A2_projectsFilteredByEndDateCountProjectsPerCompanyAndRankIt>projects filtered by end date and count projects per comapny, ranked]:::reactive
+    BQ3A1_projectsFilteredByEndDateJoinWithResearchersAndCompanies>projects joined with researchers and companies]:::reactive
+    BQ3A2_projectsFilteredByEndDateCountProjectsPerCompanyAndRankIt>count projects per comapny, ranked]:::reactive
 
-    BQ4A1_projectsPerCompany>NR: projects per company, desc]:::reactive
+    BQ5A1_projectsFilteredByEndDateAndGroupResearchersByDepartmentAndCountDepartmentPerCompanyAndRankIt>projects: group researchers by department count department per company and rank it]:::reactive
+    BQ5A2_projectsFilteredByResearchersExpertise>projects by researchers expertise]:::reactive
 
-    BQ5A1_projectsFilteredByEndDateAndGroupResearchersByDepartmentAndCountDepartmentPerCompanyAndRankIt>projects filtered by end date, group researchers by department count department per company and rank it]:::reactive
-%%    BQ5A2_projectsFilteredByEndDate>projects filtered by end date]:::reactive
-
-    BQ6A1_fteScorePerProject>NR: FTE score per project]:::reactive
-    BQ6A2_groupByRole>NR: group by role]:::reactive
 
 
 %% Output
@@ -46,19 +46,25 @@ flowchart TD
 
 %% Edges
     rneDatabase --> projectsFilteredByEndDate
-    dropdownResearcher --> projectsFilteredByEndDate
-    dropdownCompany --> projectsFilteredByEndDate
 
+    dropdownResearcher --> BQ2A1_projectsFilteredByEndDateAndCountSharedProjects
     projectsFilteredByEndDate --> BQ2A1_projectsFilteredByEndDateAndCountSharedProjects --> table
+
+    dropdownResearcher --> BQ2A2_projectsFilteredByEndDateAndCountSharedProjectsAndRankIt
     projectsFilteredByEndDate --> BQ2A2_projectsFilteredByEndDateAndCountSharedProjectsAndRankIt --> barchart
+
+    dropdownResearcher --> BQ3A1_projectsFilteredByEndDateJoinWithResearchersAndCompanies
     projectsFilteredByEndDate --> BQ3A1_projectsFilteredByEndDateJoinWithResearchersAndCompanies --> table
+
+    dropdownResearcher --> BQ3A2_projectsFilteredByEndDateCountProjectsPerCompanyAndRankIt
     projectsFilteredByEndDate --> BQ3A2_projectsFilteredByEndDateCountProjectsPerCompanyAndRankIt --> barchart
 
     rneDatabase --> BQ4A1_projectsPerCompany --> table
 
+    dropdownCompany --> BQ5A1_projectsFilteredByEndDateAndGroupResearchersByDepartmentAndCountDepartmentPerCompanyAndRankIt
     projectsFilteredByEndDate --> BQ5A1_projectsFilteredByEndDateAndGroupResearchersByDepartmentAndCountDepartmentPerCompanyAndRankIt --> table
 
-    dropdownMainResearchGroup --> projectsFilteredByEndDate --> networkGraph
+    dropdownMainResearchGroup --> BQ5A2_projectsFilteredByResearchersExpertise --> networkGraph
 
     rneDatabase --> BQ6A1_fteScorePerProject --> stackedBarchart
     rneDatabase --> BQ6A2_groupByRole --> barchart
