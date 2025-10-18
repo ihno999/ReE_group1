@@ -4,28 +4,67 @@ flowchart TD
   %% ===============================
 
   %% Inputs
-  A[Select X variable]:::input
-  B[Select Y variable]:::input
-  C[Select number of clusters]:::input
+%%  A[Select X variable]:::input
+%%  B[Select Y variable]:::input
+%%  C[Select number of clusters]:::input
+  dropdownResearcher[dropdown for researcher]:::input
+  dropdownCompany[dropdown for company]:::input
+  dropdownMainResearchGroup[dropdown for main research group]:::input
 
   %% Source
-  D[(iris dataset)]:::source
+%%  D[(iris dataset)]:::source
+  rneDatabase[(rne database)]:::source
 
   %% Reactives
-  E>subset: iris, input$xvar, input$yvar]:::reactive
-  F>kmeans, centers = input$clusters]:::reactive
+%%  E>subset: iris, input$xvar, input$yvar]:::reactive
+%%  F>kmeans, centers = input$clusters]:::reactive
+    BQ2A1_projectsFilteredByEndDateAndCountSharedProjects>projects filtered by end_date and counted shared projects per researcher]:::reactive
+    BQ2A2_projectsFilteredByEndDateAndCountSharedProjectsAndRankIt>projects filtered by end_date and counted shared projects per researcher, ranked]:::reactive
+
+    BQ3A1_projectsFilteredByEndDateJoinWithResearchersAndCompanies>projects filtered by end date, joined with researchers and companies]:::reactive
+    BQ3A2_projectsFilteredByEndDateCountProjectsPerCompanyAndRankIt>projects filtered by end date and count projects per comapny, ranked]:::reactive
+
+    BQ4A1_projectsPerCompany>NR: projects per company, desc]:::reactive
+
+    BQ5A1_projectsFilteredByEndDateAndGroupResearchersByDepartmentAndCountDepartmentPerCompanyAndRankIt>projects filtered by end date, group researchers by department count department per company and rank it]:::reactive
+    BQ5A2_projectsFilteredByEndDate>projects filtered by end date]:::reactive
+
+    BQ6A1_fteScorePerProject>NR: FTE score per project]:::reactive
+    BQ6A2_groupByRole>NR: group by role]:::reactive
+
 
   %% Output
-  G[[renderPlot: scatter plot with cluster colors]]:::output
+%%  G[[renderPlot: scatter plot with cluster colors]]:::output
+  stackedBarchart[[stacked barchart]]:::output
+  barchart[[barchart]]:::output
+  table[[table]]:::output
+  networkGraph[[network graph]]:::output
+
+
 
   %% Edges
-  D --> E
-  A --> E
-  B --> E
-  E --> F
-  C --> F
-  F --> G
-  E --> G
+  dropdownResearcher --> BQ2A1_projectsFilteredByEndDateAndCountSharedProjects
+  rneDatabase --> BQ2A1_projectsFilteredByEndDateAndCountSharedProjects --> table
+
+  dropdownResearcher --> BQ2A2_projectsFilteredByEndDateAndCountSharedProjectsAndRankIt
+  rneDatabase --> BQ2A2_projectsFilteredByEndDateAndCountSharedProjectsAndRankIt --> barchart
+
+  dropdownResearcher --> BQ3A1_projectsFilteredByEndDateJoinWithResearchersAndCompanies
+  rneDatabase --> BQ3A1_projectsFilteredByEndDateJoinWithResearchersAndCompanies --> table
+
+  dropdownResearcher --> BQ3A2_projectsFilteredByEndDateCountProjectsPerCompanyAndRankIt
+  rneDatabase --> BQ3A2_projectsFilteredByEndDateCountProjectsPerCompanyAndRankIt --> barchart
+
+  rneDatabase --> BQ4A1_projectsPerCompany --> table
+
+  dropdownCompany --> BQ5A1_projectsFilteredByEndDateAndGroupResearchersByDepartmentAndCountDepartmentPerCompanyAndRankIt
+  rneDatabase --> BQ5A1_projectsFilteredByEndDateAndGroupResearchersByDepartmentAndCountDepartmentPerCompanyAndRankIt --> table
+
+  dropdownMainResearchGroup --> BQ5A2_projectsFilteredByEndDate
+  rneDatabase --> BQ5A2_projectsFilteredByEndDate --> networkGraph
+
+  rneDatabase --> BQ6A1_fteScorePerProject --> stackedBarchart
+  rneDatabase --> BQ6A2_groupByRole --> barchart
 
   %% Legend
   subgraph Legend
