@@ -16,7 +16,7 @@ Install required packages:
  - `R> install.packages("renv")`
  - `R> renv::restore()`
 
-Run the app with `R> runApp("./", launch.browser=FALSE, port = 8080)`
+[//]: # (Run the app with `R> runApp&#40;"./", launch.browser=FALSE, port = 8080&#41;`)
 
 
 
@@ -30,7 +30,7 @@ Run the app with `R> runApp("./", launch.browser=FALSE, port = 8080)`
 # Miscellaneous
 ## How To
 Install package: `install.packages("package-name")`\
-Record the packages: `renv.snapshot()`
+Record the packages: `renv::snapshot()`
 
 ## Diagram
 ```mermaid
