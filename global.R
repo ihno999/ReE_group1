@@ -4,7 +4,7 @@ library(DT)
 # library(ggplot2)
 # library(dplyr)
 # library(lubridate)
-# library(bslib)
+library(bslib)
 # library(ggExtra)
 
 # Source helper functions
