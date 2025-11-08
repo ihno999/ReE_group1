@@ -1,7 +1,7 @@
 ### UI
 vars <- setdiff(names(iris), "Species")
 
-ui_graph <- sidebarLayout(
+ui_graph_people_page <- sidebarLayout(
   sidebarPanel(
     selectInput('people_page_xcol', 'X Variable', vars),
     selectInput('people_page_ycol', 'Y Variable', vars, selected = vars[[2]]),
@@ -12,7 +12,7 @@ ui_graph <- sidebarLayout(
 
 
 ### Server
-server_graph <- function(input, output) {
+server_graph_people_page <- function(input, output) {
     selectedData <- reactive({
       iris[, c(input$people_page_xcol, input$people_page_ycol)]
     })
