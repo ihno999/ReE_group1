@@ -13,10 +13,11 @@ Intellij plugins:
  - R Language, JetBrains s.r.o.
 
 Install required packages:
- - `R> install.packages("renv")`
+
+[//]: # ( - `R> install.packages&#40;"renv"&#41;`)
  - `R> renv::restore()`
 
-[//]: # (Run the app with `R> runApp&#40;"./", launch.browser=FALSE, port = 8080&#41;`)
+Run the app with `R> runApp("./", launch.browser=FALSE, port = 8080)`
 
 
 
