@@ -5,4 +5,6 @@ server <- function(input, output) {
     company_data %>%
       DT::datatable()
   })
+
+  
 }
