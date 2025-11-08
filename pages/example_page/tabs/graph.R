@@ -1,0 +1,46 @@
+### UI
+vars <- setdiff(names(iris), "Species")
+
+ui_graph <- sidebarLayout(
+  sidebarPanel(
+    selectInput('xcol', 'X Variable', vars),
+    selectInput('ycol', 'Y Variable', vars, selected = vars[[2]]),
+    numericInput('clusters', 'Cluster count', 3, min = 1, max = 9)
+  ),
+  mainPanel(plotOutput('plot1'))
+)
+
+
+
+### Server
+server_graph <- function(input, output) {
+    selectedData <- reactive({
+      iris[, c(input$xcol, input$ycol)]
+    })
+
+    clusters <- reactive({
+      kmeans(selectedData(), input$clusters)
+    })
+
+    output$plot1 <- renderPlot({
+      palette(c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3",
+                "#FF7F00", "#FFFF33", "#A65628", "#F781BF", "#999999"))
+
+      par(mar = c(5.1, 4.1, 0, 1))
+      plot(selectedData(),
+           col = clusters()$cluster,
+           pch = 20, cex = 3)
+      points(clusters()$centers, pch = 4, cex = 4, lwd = 4)
+    })
+}
+
+
+# graph_example_page_output_companies_graph <- DT::renderDT({
+#   company_data %>%
+#     DT::datatable()
+# })
+#
+# graph_example_page <- sidebarLayout(
+#   sidebarPanel(sliderInput('nb_bins', 'Number of bins', 5, 10 , 5)),
+#   mainPanel(DT::DTOutput("companies_graph"))
+# )
