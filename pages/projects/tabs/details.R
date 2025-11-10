@@ -1,18 +1,27 @@
 ### UI
 vars <- setdiff(names(iris), "Species")
 
-ui_graph_projects_page <- sidebarLayout(
+ui_details_projects_page <- sidebarLayout(
   sidebarPanel(
+    textInput("projects_page_details_researcher_name", "Researcher name", "Test"),
+    checkboxGroupInput("projects_page_details_fields", "Fields:",
+                       c("AI" = "ai",
+                         "Software development" = "sd")),
     selectInput('projects_page_xcol', 'X Variable', vars),
     selectInput('projects_page_ycol', 'Y Variable', vars, selected = vars[[2]]),
     numericInput('projects_page_clusters', 'Cluster count', 3, min = 1, max = 9)
   ),
-  mainPanel(plotOutput('projects_page_plot1'))
+  # mainPanel(plotOutput('projects_page_plot1'))
+  # mainPanel(verbatimTextOutput("projects_page_details_researcher_name_output"))
+  mainPanel(verbatimTextOutput("projects_page_details_fields_output"))
 )
 
 
 ### Server
-server_graph_projects_page <- function(input, output) {
+server_details_projects_page <- function(input, output) {
+    output$projects_page_details_researcher_name_output <- renderText({ input$projects_page_details_researcher_name })
+    output$projects_page_details_fields_output <- renderText({ input$projects_page_details_fields })
+
     selectedData <- reactive({
       iris[, c(input$projects_page_xcol, input$projects_page_ycol)]
     })
