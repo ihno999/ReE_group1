@@ -23,7 +23,7 @@ ui_graph_projects_page <- sidebarLayout(
 # Server for the Graph Tab
 # =============================================================
 server_graph_projects_page <- function(input, output, session) {
-  # Dynamic dropdown for researcher or company
+  # --- Dynamic dropdown for researcher or company ---
   output$entity_select_ui <- renderUI({
     if (input$entity_type == "Researcher") {
       selectInput(
@@ -40,7 +40,7 @@ server_graph_projects_page <- function(input, output, session) {
     }
   })
 
-  # Field (project type) selection
+  # --- Field (project type) selection ---
   output$field_select_ui <- renderUI({
     selectInput(
       "selected_field",
@@ -49,16 +49,16 @@ server_graph_projects_page <- function(input, output, session) {
     )
   })
 
-  # Reactive: Filter related projects based on field
+  # --- Reactive: Filter related projects based on field ---
   related_data <- reactive({
     req(input$selected_field)
     filtered_projects <- filter_projects_by_field(projects_data, input$selected_field)
     get_related_collaboration_data(filtered_projects)
   })
 
-  # Reactive: Build visNetwork graph
+  # --- Build visNetwork graph ---
   output$network_plot <- renderVisNetwork({
-    req(related_data())
+    req(related_data(), input$entity_name)
 
     rd <- related_data()
 
@@ -103,11 +103,31 @@ server_graph_projects_page <- function(input, output, session) {
 
     edges <- dplyr::bind_rows(researcher_edges, company_edges)
 
-    # --- Render the network ---
+    # --- Determine selected node ID ---
+    selected_node_id <- if (input$entity_type == "Researcher") {
+      node <- researcher_nodes %>%
+        dplyr::filter(label == input$entity_name) %>%
+        dplyr::pull(id)
+      if (length(node) > 0) node else NULL
+    } else {
+      node <- company_nodes %>%
+        dplyr::filter(label == input$entity_name) %>%
+        dplyr::pull(id)
+      if (length(node) > 0) node else NULL
+    }
+
+    # --- Render network ---
     visNetwork(nodes, edges) %>%
       visNodes(shape = "dot", size = 15) %>%
       visEdges(smooth = FALSE, arrows = "to") %>%
-      visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE) %>%
-      visPhysics(stabilization = TRUE)
+      visOptions(highlightNearest = TRUE, nodesIdSelection = FALSE) %>% # disable internal "Select by ID"
+      visPhysics(stabilization = TRUE) %>%
+      # Focus automatically on selected researcher or company
+      visEvents(
+        stabilized = sprintf(
+          "function() { this.focus('%s', {scale: 1.5, animation: true}); }",
+          selected_node_id
+        )
+      )
   })
 }
