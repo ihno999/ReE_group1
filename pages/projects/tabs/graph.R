@@ -120,7 +120,7 @@ server_graph_projects_page <- function(input, output, session) {
     visNetwork(nodes, edges) %>%
       visNodes(shape = "dot", size = 15) %>%
       visEdges(smooth = FALSE, arrows = "to") %>%
-      visOptions(highlightNearest = TRUE, nodesIdSelection = FALSE) %>% # disable internal "Select by ID"
+      visOptions(highlightNearest = TRUE, nodesIdSelection = FALSE) %>%
       visPhysics(stabilization = TRUE) %>%
       # Focus automatically on selected researcher or company
       visEvents(
