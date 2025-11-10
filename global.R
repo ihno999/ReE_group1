@@ -23,3 +23,6 @@ research_participation_data <- read.csv("data/raw/Research_Participation.csv")
 researchers_data <- read.csv("data/raw/Researchers.csv")
 # sales_data <- read.csv("data/processed/sales_clean.csv") %>%
 #   mutate(date = as.Date(date))
+
+
+clean_column_names()

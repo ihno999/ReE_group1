@@ -1,34 +1,113 @@
-### UI
-vars <- setdiff(names(iris), "Species")
+source("./global.R")
 
+
+# =============================================================
+# UI for the Graph Tab
+# =============================================================
 ui_graph_projects_page <- sidebarLayout(
   sidebarPanel(
-    selectInput('projects_page_xcol', 'X Variable', vars),
-    selectInput('projects_page_ycol', 'Y Variable', vars, selected = vars[[2]]),
-    numericInput('projects_page_clusters', 'Cluster count', 3, min = 1, max = 9)
+    selectInput(
+      "entity_type",
+      "Select type:",
+      choices = c("Researcher", "Company")
+    ),
+    uiOutput("entity_select_ui"),
+    uiOutput("field_select_ui")
   ),
-  mainPanel(plotOutput('projects_page_plot1'))
+  mainPanel(
+    visNetworkOutput("network_plot", height = "600px")
+  )
 )
 
+# =============================================================
+# Server for the Graph Tab
+# =============================================================
+server_graph_projects_page <- function(input, output, session) {
+  # Dynamic dropdown for researcher or company
+  output$entity_select_ui <- renderUI({
+    if (input$entity_type == "Researcher") {
+      selectInput(
+        "entity_name",
+        "Select Researcher:",
+        choices = unique(researchers_data$researcher_name)
+      )
+    } else {
+      selectInput(
+        "entity_name",
+        "Select Company:",
+        choices = unique(company_data$company_name)
+      )
+    }
+  })
 
-### Server
-server_graph_projects_page <- function(input, output) {
-    selectedData <- reactive({
-      iris[, c(input$projects_page_xcol, input$projects_page_ycol)]
-    })
+  # Field (project type) selection
+  output$field_select_ui <- renderUI({
+    selectInput(
+      "selected_field",
+      "Field of new project:",
+      choices = unique(projects_data$type)
+    )
+  })
 
-    clusters <- reactive({
-      kmeans(selectedData(), input$projects_page_clusters)
-    })
+  # Reactive: Filter related projects based on field
+  related_data <- reactive({
+    req(input$selected_field)
+    filtered_projects <- filter_projects_by_field(projects_data, input$selected_field)
+    get_related_collaboration_data(filtered_projects)
+  })
 
-    output$projects_page_plot1 <- renderPlot({
-      palette(c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3",
-                "#FF7F00", "#FFFF33", "#A65628", "#F781BF", "#999999"))
+  # Reactive: Build visNetwork graph
+  output$network_plot <- renderVisNetwork({
+    req(related_data())
 
-      par(mar = c(5.1, 4.1, 0, 1))
-      plot(selectedData(),
-           col = clusters()$cluster,
-           pch = 20, cex = 3)
-      points(clusters()$centers, pch = 4, cex = 4, lwd = 4)
-    })
+    rd <- related_data()
+
+    # --- Create nodes with unique IDs ---
+    project_nodes <- data.frame(
+      id = paste0("P_", rd$projects$project_id),
+      label = rd$projects$type,
+      group = "Project"
+    )
+
+    researcher_nodes <- data.frame(
+      id = paste0("R_", rd$researchers$researcher_id),
+      label = rd$researchers$researcher_name,
+      group = "Researcher"
+    )
+
+    company_nodes <- data.frame(
+      id = paste0("C_", rd$companies$company_id),
+      label = rd$companies$company_name,
+      group = "Company"
+    )
+
+    nodes <- dplyr::bind_rows(project_nodes, researcher_nodes, company_nodes) %>%
+      dplyr::distinct(id, .keep_all = TRUE)
+
+    # --- Create edges using prefixed IDs ---
+    researcher_edges <- rd$researchers %>%
+      dplyr::select(project_id, researcher_id) %>%
+      dplyr::mutate(
+        from = paste0("R_", researcher_id),
+        to = paste0("P_", project_id)
+      ) %>%
+      dplyr::select(from, to)
+
+    company_edges <- rd$companies %>%
+      dplyr::select(project_id, company_id) %>%
+      dplyr::mutate(
+        from = paste0("C_", company_id),
+        to = paste0("P_", project_id)
+      ) %>%
+      dplyr::select(from, to)
+
+    edges <- dplyr::bind_rows(researcher_edges, company_edges)
+
+    # --- Render the network ---
+    visNetwork(nodes, edges) %>%
+      visNodes(shape = "dot", size = 15) %>%
+      visEdges(smooth = FALSE, arrows = "to") %>%
+      visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE) %>%
+      visPhysics(stabilization = TRUE)
+  })
 }
