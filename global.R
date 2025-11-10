@@ -1,11 +1,12 @@
 # Load required libraries
 library(shiny)
 library(DT)
-# library(ggplot2)
-# library(dplyr)
+library(dplyr)
 # library(lubridate)
 library(bslib)
 # library(ggExtra)
+library(ggplot2)
+library(palmerpenguins)
 
 # Source helper functions
 source("./R/data_functions.R")

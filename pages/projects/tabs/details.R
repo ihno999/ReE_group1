@@ -3,6 +3,13 @@ vars <- setdiff(names(iris), "Species")
 
 ui_details_projects_page <- sidebarLayout(
   sidebarPanel(
+    sliderInput(
+      "projects_page_details_slider",
+      label = "Number of bins",
+      min = 10,
+      max = 60,
+      value = 20
+    ),
     textInput("projects_page_details_researcher_name", "Researcher name", "Test"),
     checkboxGroupInput("projects_page_details_fields", "Fields:",
                        c("AI" = "ai",
@@ -13,14 +20,39 @@ ui_details_projects_page <- sidebarLayout(
   ),
   # mainPanel(plotOutput('projects_page_plot1'))
   # mainPanel(verbatimTextOutput("projects_page_details_researcher_name_output"))
-  mainPanel(verbatimTextOutput("projects_page_details_fields_output"))
+  # mainPanel(verbatimTextOutput("projects_page_details_fields_output"))
+  mainPanel(
+    card(verbatimTextOutput("projects_page_details_researcher_name_output")),
+    card(verbatimTextOutput("projects_page_details_fields_output")),
+    card(tableOutput("projects_page_details_tableDT")),
+    card(tableOutput('projects_page_details_table')),
+    card(plotOutput('projects_page_details_plot_output')),
+    card(plotOutput('projects_page_plot1'))
+  )
 )
 
 
 ### Server
 server_details_projects_page <- function(input, output) {
-    output$projects_page_details_researcher_name_output <- renderText({ input$projects_page_details_researcher_name })
+  output$projects_page_details_plot_output <- renderPlot(
+  {
+    ggplot(data = penguins, aes(body_mass_g)) +
+      geom_histogram(bins = input$projects_page_details_slider)
+  }
+  )
+
+  output$projects_page_details_researcher_name_output <- renderText({ input$projects_page_details_researcher_name })
     output$projects_page_details_fields_output <- renderText({ input$projects_page_details_fields })
+    test_db <- researchers_data
+    rval_filtered_researchers <- reactive({
+      test_db %>%
+        filter(employee_id == 1001)
+    })
+  output$projects_page_details_tableDT <- renderTable({
+    rval_filtered_researchers()
+  })
+    output$projects_page_details_table <- renderTable(researchers_data)
+    # output$projects_page_details_table <- renderTable(filter(researchers_data, employee_id == 1))
 
     selectedData <- reactive({
       iris[, c(input$projects_page_xcol, input$projects_page_ycol)]
