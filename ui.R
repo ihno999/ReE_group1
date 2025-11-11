@@ -1,9 +1,43 @@
-source("./global.R")
+library(shiny)
 
-ui <- fluidPage(
-  titlePanel("Hello World!!"),
-  sidebarLayout(
-    sidebarPanel(sliderInput('nb_bins', 'Number of bins', 5, 10 , 5)),
-    mainPanel(DT::DTOutput("companies_table"))
+fluidPage(
+  
+  titlePanel("RnE"),
+  
+  # Tabset panel with three tabs
+  tabsetPanel(
+    id = "mainTabs",
+    type = "tabs",
+    
+    # Projects Tab
+    tabPanel(
+      "Projects",
+      h3("Projects Content"),
+      p("This is the Projects tab content.")
+    ),
+    
+    # People Tab
+    tabPanel(
+      "People",
+      sidebarLayout(
+        sidebarPanel(
+          h4("Side Panel"),
+          selectInput("select_name", "Select a name:", 
+            choices = c("", researchers_data$name))
+          # selectInput("select_name", "Select a name:", researchers_data$name)
+        ),
+        mainPanel(
+          h3("People Overview"),
+          dataTableOutput("people_table")
+        )
+      )
+    ),
+    
+    # Time Tab
+    tabPanel(
+      "Time",
+      h3("Time Tracking"),
+      p("This is the Time tab content.")
+    )
   )
 )
