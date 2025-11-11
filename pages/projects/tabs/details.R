@@ -22,6 +22,8 @@ ui_details_projects_page <- sidebarLayout(
   # mainPanel(verbatimTextOutput("projects_page_details_researcher_name_output"))
   # mainPanel(verbatimTextOutput("projects_page_details_fields_output"))
   mainPanel(
+    card(tableOutput('duckdb_results')),
+    card(plotOutput('projects_page_details_stacked_bar_chart_output')),
     card(verbatimTextOutput("projects_page_details_researcher_name_output")),
     card(verbatimTextOutput("projects_page_details_fields_output")),
     card(tableOutput("projects_page_details_tableDT")),
@@ -34,6 +36,59 @@ ui_details_projects_page <- sidebarLayout(
 
 ### Server
 server_details_projects_page <- function(input, output) {
+  # create a dataset
+  specie <- c(rep("sorgho" , 3) , rep("poacee" , 3) , rep("banana" , 3) , rep("triticum" , 3) )
+  condition <- rep(c("normal" , "stress" , "Nitrogen") , 4)
+  value <- abs(rnorm(12 , 0 , 15))
+  data <- data.frame(specie,condition,value)
+
+  data_2 <- data.frame(
+    "projects" = c("A","B","C","D","E"),
+    "companies" = c(rep("Worldline", 3), rep("Proximus", 2)),
+    "fields" = c("AI", "AI", "Software development", "AI", "AI"),
+    "count_projects" = c(rep(1, 5))
+  )
+
+  query <- r'(
+        -- get_project_field
+		WITH project_fields AS (
+			SELECT
+			    p.project_id project_id,
+				p.name project_name,
+				p.description project_description,
+				r.name researcher_name,
+				rg.name group_name,
+				COUNT(*) OVER (PARTITION BY rg.name) sort_digit
+			FROM projects p
+				LEFT JOIN research_participation rp
+					ON (p.project_id = rp.project_id)
+				LEFT JOIN researchers r
+					ON (rp.researcher_id = r.employee_id)
+				LEFT JOIN research_groups rg
+					ON (r.main_research_group = rg.group_id)
+			-- WHERE
+				-- p.project_id = 4001
+			ORDER BY sort_digit DESC
+		)
+		SELECT *
+		FROM project_fields;
+    )'
+
+  results <- dbGetQuery(con, query)
+
+  output$duckdb_results <- renderTable({
+    results %>%
+      filter(project_id == 4003)
+  })
+
+  # Grouped
+  output$projects_page_details_stacked_bar_chart_output <- renderPlot({
+    # ggplot(data, aes(fill=condition, y=value, x=specie)) +
+    #   geom_bar(position="stack", stat="identity")
+    ggplot(data_2, aes(fill=fields, y=count_projects, x=companies)) +
+      geom_bar(position="stack", stat="identity")
+  })
+
   output$projects_page_details_plot_output <- renderPlot(
   {
     ggplot(data = penguins, aes(body_mass_g)) +
@@ -43,14 +98,20 @@ server_details_projects_page <- function(input, output) {
 
   output$projects_page_details_researcher_name_output <- renderText({ input$projects_page_details_researcher_name })
     output$projects_page_details_fields_output <- renderText({ input$projects_page_details_fields })
-    test_db <- researchers_data
-    rval_filtered_researchers <- reactive({
-      test_db %>%
-        filter(employee_id == 1001)
-    })
+
+    df_researcher_details <- data.frame(
+      "Name" = df_researchers_and_groups$name.x,
+      "Research Group" = df_researchers_and_groups$name.y,
+      check.names = FALSE
+    )
+
+
   output$projects_page_details_tableDT <- renderTable({
-    rval_filtered_researchers()
+    # df_researcher_details()
+    # merge(df_filtered_researchers, research_groups_data, by.x="main_research_group", by.y="group_id")
+    df_researcher_details %>% filter(Name == input$projects_page_details_researcher_name)
   })
+
     output$projects_page_details_table <- renderTable(researchers_data)
     # output$projects_page_details_table <- renderTable(filter(researchers_data, employee_id == 1))
 
