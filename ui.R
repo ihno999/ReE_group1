@@ -32,6 +32,21 @@ fluidPage(
         )
       )
     ),
+    # Company Tab
+    tabPanel(
+      "Company",
+      sidebarLayout(
+        sidebarPanel(
+          h4("Side Panel"),
+          selectInput("select_company_name", "Select a company:", 
+            choices = c("", company_data$name))
+        ),
+        mainPanel(
+          h3("Company and Company-contacts Overview"),
+          dataTableOutput("company_table")
+        )
+      )
+    ),
     
     # Time Tab
     tabPanel(
