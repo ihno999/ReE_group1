@@ -1,14 +1,13 @@
 ### UI
 ui_details_projects_page <- sidebarLayout(
   sidebarPanel(
-    textInput("projects_page_details_researcher_name", "Researcher name", ""),
+    textInput("projects_page_details_researcher_name", "Researcher name", "Kathleen Bailey"),
     uiOutput('projects_page_details_project_fields_checkboxes_output'),
     width=2
   ),
   mainPanel(
     card(tableOutput("projects_page_details_stacked_bar_chart_table_output")),
     card(plotOutput('projects_page_details_stacked_bar_chart_output'), full_screen=TRUE),
-    card(verbatimTextOutput("projects_page_details_fields_output")),
     card(div(dataTableOutput("projects_page_details_stacked_bar_chart_df_output"), style = "font-size:80%"), full_screen=TRUE)
   )
 )
@@ -27,12 +26,14 @@ server_details_projects_page <- function(input, output) {
   df_filtered_for_project_details_stacked_bar_chart <- reactive({
     df_for_project_details_stacked_bar_chart %>%
       filter(researcher_name == input$projects_page_details_researcher_name) %>%
+      filter(project_field %in% input$projects_page_details_project_fields_checkboxes) %>%
       arrange(desc(sort_digit))
   })
 
   output$projects_page_details_stacked_bar_chart_output <- renderPlot({
-    ggplot(df_filtered_for_project_details_stacked_bar_chart(), aes(fill=project_field, y=sum_digit, x=fct_reorder(company_name, desc(sort_digit)))) +
-      geom_bar(position="stack", stat="identity") +
+    ggplot(df_filtered_for_project_details_stacked_bar_chart(), aes(fill=project_field, y=sort_digit, x=fct_reorder(company_name, desc(sort_digit)))) +
+      geom_bar(position="stack", stat="identity", width=0.8) +
+      xlab("Company") + ylab("Projects count") +
       theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
       theme(text=element_text(size=16)) +
       ggtitle("Researcher's projects in different companies and fields")
@@ -42,8 +43,6 @@ server_details_projects_page <- function(input, output) {
     ggplot(data = penguins, aes(body_mass_g)) +
       geom_histogram(bins = input$projects_page_details_slider)
   })
-
-  output$projects_page_details_fields_output <- renderText({ input$projects_page_details_project_fields_checkboxes })
 
   df_researcher_details <- data.frame(
     "Name" = df_researchers_and_groups$name.x,
@@ -55,5 +54,5 @@ server_details_projects_page <- function(input, output) {
     df_researcher_details %>% filter(Name == input$projects_page_details_researcher_name)
   })
 
-  output$projects_page_details_stacked_bar_chart_df_output <- renderDataTable({ df_filtered_for_project_details_stacked_bar_chart() })
+  output$projects_page_details_stacked_bar_chart_df_output <- renderDataTable({ df_filtered_for_project_details_stacked_bar_chart() }, filter='top')
 }
