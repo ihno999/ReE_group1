@@ -49,44 +49,31 @@ server_details_projects_page <- function(input, output) {
     "count_projects" = c(rep(1, 5))
   )
 
-  query <- r'(
-        -- get_project_field
-		WITH project_fields AS (
-			SELECT
-			    p.project_id project_id,
-				p.name project_name,
-				p.description project_description,
-				r.name researcher_name,
-				rg.name group_name,
-				COUNT(*) OVER (PARTITION BY rg.name) sort_digit
-			FROM projects p
-				LEFT JOIN research_participation rp
-					ON (p.project_id = rp.project_id)
-				LEFT JOIN researchers r
-					ON (rp.researcher_id = r.employee_id)
-				LEFT JOIN research_groups rg
-					ON (r.main_research_group = rg.group_id)
-			-- WHERE
-				-- p.project_id = 4001
-			ORDER BY sort_digit DESC
-		)
-		SELECT *
-		FROM project_fields;
-    )'
-
-  results <- dbGetQuery(con, query)
 
   output$duckdb_results <- renderTable({
-    results %>%
-      filter(project_id == 4003)
+    df_filtered_for_project_details_stacked_bar_chart()
+      # filter(project_id == 4003)
   })
+
+
+  df_filtered_for_project_details_stacked_bar_chart <- reactive({
+    df_for_project_details_stacked_bar_chart %>%
+      filter(researcher_name == "Andrea Green") %>%
+      # filter(sort_digit > 1) %>%
+      arrange(desc(sort_digit))
+      # mutate(name = fct_reorder(company_name, desc(sort_digit)))
+      # factor(company_name,  levels = company_name)
+  })
+
 
   # Grouped
   output$projects_page_details_stacked_bar_chart_output <- renderPlot({
     # ggplot(data, aes(fill=condition, y=value, x=specie)) +
     #   geom_bar(position="stack", stat="identity")
-    ggplot(data_2, aes(fill=fields, y=count_projects, x=companies)) +
-      geom_bar(position="stack", stat="identity")
+    ggplot(df_filtered_for_project_details_stacked_bar_chart(), aes(fill=project_field, y=sum_digit, x=fct_reorder(company_name, desc(sort_digit)))) +
+      geom_bar(position="stack", stat="identity") +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+      ggtitle("Researcher's projects in different companies and fields")
   })
 
   output$projects_page_details_plot_output <- renderPlot(
