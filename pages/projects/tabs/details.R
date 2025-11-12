@@ -1,7 +1,12 @@
+### Parameters
+p_researcher_name <- "Kathleen Bailey"
+p_project_fields <- c('Circular Economy', 'Digital Education', 'BioTech', 'Cybersecurity')
+
+
 ### UI
 ui_details_projects_page <- sidebarLayout(
   sidebarPanel(
-    textInput("projects_page_details_researcher_name", "Researcher name", "Kathleen Bailey"),
+    textInput("projects_page_details_researcher_name", "Researcher name", p_researcher_name),
     uiOutput('projects_page_details_project_fields_checkboxes_output'),
     width=2
   ),
@@ -19,7 +24,8 @@ server_details_projects_page <- function(input, output) {
     project_fields <- distinct(df_for_project_details_stacked_bar_chart, project_field)
     checkboxGroupInput(
       "projects_page_details_project_fields_checkboxes",
-        "Fields:", project_fields %>% unlist(use.names = FALSE)
+        "Fields:", project_fields %>% unlist(use.names = FALSE),
+      selected=p_project_fields
     )
   })
 
