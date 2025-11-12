@@ -1,123 +1,59 @@
 ### UI
-vars <- setdiff(names(iris), "Species")
-
 ui_details_projects_page <- sidebarLayout(
   sidebarPanel(
-    sliderInput(
-      "projects_page_details_slider",
-      label = "Number of bins",
-      min = 10,
-      max = 60,
-      value = 20
-    ),
-    textInput("projects_page_details_researcher_name", "Researcher name", "Test"),
-    checkboxGroupInput("projects_page_details_fields", "Fields:",
-                       c("AI" = "ai",
-                         "Software development" = "sd")),
-    selectInput('projects_page_xcol', 'X Variable', vars),
-    selectInput('projects_page_ycol', 'Y Variable', vars, selected = vars[[2]]),
-    numericInput('projects_page_clusters', 'Cluster count', 3, min = 1, max = 9)
+    textInput("projects_page_details_researcher_name", "Researcher name", ""),
+    uiOutput('projects_page_details_project_fields_checkboxes_output'),
+    width=2
   ),
-  # mainPanel(plotOutput('projects_page_plot1'))
-  # mainPanel(verbatimTextOutput("projects_page_details_researcher_name_output"))
-  # mainPanel(verbatimTextOutput("projects_page_details_fields_output"))
   mainPanel(
-    card(tableOutput('duckdb_results')),
-    card(plotOutput('projects_page_details_stacked_bar_chart_output')),
-    card(verbatimTextOutput("projects_page_details_researcher_name_output")),
+    card(tableOutput("projects_page_details_stacked_bar_chart_table_output")),
+    card(plotOutput('projects_page_details_stacked_bar_chart_output'), full_screen=TRUE),
     card(verbatimTextOutput("projects_page_details_fields_output")),
-    card(tableOutput("projects_page_details_tableDT")),
-    card(tableOutput('projects_page_details_table')),
-    card(plotOutput('projects_page_details_plot_output')),
-    card(plotOutput('projects_page_plot1'))
+    card(div(dataTableOutput("projects_page_details_stacked_bar_chart_df_output"), style = "font-size:80%"), full_screen=TRUE)
   )
 )
 
 
 ### Server
 server_details_projects_page <- function(input, output) {
-  # create a dataset
-  specie <- c(rep("sorgho" , 3) , rep("poacee" , 3) , rep("banana" , 3) , rep("triticum" , 3) )
-  condition <- rep(c("normal" , "stress" , "Nitrogen") , 4)
-  value <- abs(rnorm(12 , 0 , 15))
-  data <- data.frame(specie,condition,value)
-
-  data_2 <- data.frame(
-    "projects" = c("A","B","C","D","E"),
-    "companies" = c(rep("Worldline", 3), rep("Proximus", 2)),
-    "fields" = c("AI", "AI", "Software development", "AI", "AI"),
-    "count_projects" = c(rep(1, 5))
-  )
-
-
-  output$duckdb_results <- renderTable({
-    df_filtered_for_project_details_stacked_bar_chart()
-      # filter(project_id == 4003)
+  output$projects_page_details_project_fields_checkboxes_output <- renderUI({
+    project_fields <- distinct(df_for_project_details_stacked_bar_chart, project_field)
+    checkboxGroupInput(
+      "projects_page_details_project_fields_checkboxes",
+        "Fields:", project_fields %>% unlist(use.names = FALSE)
+    )
   })
-
 
   df_filtered_for_project_details_stacked_bar_chart <- reactive({
     df_for_project_details_stacked_bar_chart %>%
-      filter(researcher_name == "Andrea Green") %>%
-      # filter(sort_digit > 1) %>%
+      filter(researcher_name == input$projects_page_details_researcher_name) %>%
       arrange(desc(sort_digit))
-      # mutate(name = fct_reorder(company_name, desc(sort_digit)))
-      # factor(company_name,  levels = company_name)
   })
 
-
-  # Grouped
   output$projects_page_details_stacked_bar_chart_output <- renderPlot({
-    # ggplot(data, aes(fill=condition, y=value, x=specie)) +
-    #   geom_bar(position="stack", stat="identity")
     ggplot(df_filtered_for_project_details_stacked_bar_chart(), aes(fill=project_field, y=sum_digit, x=fct_reorder(company_name, desc(sort_digit)))) +
       geom_bar(position="stack", stat="identity") +
-      theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+      theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+      theme(text=element_text(size=16)) +
       ggtitle("Researcher's projects in different companies and fields")
   })
 
-  output$projects_page_details_plot_output <- renderPlot(
-  {
+  output$projects_page_details_plot_output <- renderPlot({
     ggplot(data = penguins, aes(body_mass_g)) +
       geom_histogram(bins = input$projects_page_details_slider)
-  }
+  })
+
+  output$projects_page_details_fields_output <- renderText({ input$projects_page_details_project_fields_checkboxes })
+
+  df_researcher_details <- data.frame(
+    "Name" = df_researchers_and_groups$name.x,
+    "Research Group" = df_researchers_and_groups$name.y,
+    check.names = FALSE
   )
 
-  output$projects_page_details_researcher_name_output <- renderText({ input$projects_page_details_researcher_name })
-    output$projects_page_details_fields_output <- renderText({ input$projects_page_details_fields })
-
-    df_researcher_details <- data.frame(
-      "Name" = df_researchers_and_groups$name.x,
-      "Research Group" = df_researchers_and_groups$name.y,
-      check.names = FALSE
-    )
-
-
-  output$projects_page_details_tableDT <- renderTable({
-    # df_researcher_details()
-    # merge(df_filtered_researchers, research_groups_data, by.x="main_research_group", by.y="group_id")
+  output$projects_page_details_stacked_bar_chart_table_output <- renderTable({
     df_researcher_details %>% filter(Name == input$projects_page_details_researcher_name)
   })
 
-    output$projects_page_details_table <- renderTable(researchers_data)
-    # output$projects_page_details_table <- renderTable(filter(researchers_data, employee_id == 1))
-
-    selectedData <- reactive({
-      iris[, c(input$projects_page_xcol, input$projects_page_ycol)]
-    })
-
-    clusters <- reactive({
-      kmeans(selectedData(), input$projects_page_clusters)
-    })
-
-    output$projects_page_plot1 <- renderPlot({
-      palette(c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3",
-                "#FF7F00", "#FFFF33", "#A65628", "#F781BF", "#999999"))
-
-      par(mar = c(5.1, 4.1, 0, 1))
-      plot(selectedData(),
-           col = clusters()$cluster,
-           pch = 20, cex = 3)
-      points(clusters()$centers, pch = 4, cex = 4, lwd = 4)
-    })
+  output$projects_page_details_stacked_bar_chart_df_output <- renderDataTable({ df_filtered_for_project_details_stacked_bar_chart() })
 }
