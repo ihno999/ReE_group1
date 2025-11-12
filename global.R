@@ -2,13 +2,9 @@
 library(shiny)
 library(DT)
 library(dplyr)
-# library(lubridate)
 library(bslib)
-# library(ggExtra)
 library(ggplot2)
-library(palmerpenguins)
 library(viridis)
-# library(hrbrthemes)
 library(duckdb)
 library(forcats)
 
@@ -39,14 +35,6 @@ duckdb_register(con, "researchers", researchers_data)
 
 # Custom views.
 df_researchers_and_groups <- merge(researchers_data, research_groups_data, by.x="main_research_group", by.y="group_id")
-# df_general <- merge(projects_data, research_participation_data, by.x='project_id', by.y='project_id')
-# df_general <- merge(df_general, researchers_data, by.x='researcher_id', by.y='employee_id')
-# df_general <- merge(df_general, research_groups_data, by.x='main_research_group', by.y='group_id')
-# df_general <- merge(df_general, research_participation_data, by.x='project_id', by.y='project_id')
-# df_general <- merge(df_general, research_participation_data, by.x='project_id', by.y='project_id')
-# df_general <- merge(df_general, research_participation_data, by.x='project_id', by.y='project_id')
-# sales_data <- read.csv("data/processed/sales_clean.csv") %>%
-#   mutate(date = as.Date(date))
 
 # df_general_with_project_fields <- dbGetQuery(con, q_df_general)
 df_general <- dbGetQuery(con, q_df_general)
