@@ -19,3 +19,9 @@ calculate_monthly_sales <- function(data) {
       .groups = "drop"
     )
 }
+
+
+
+# df_for_project_details_stacked_bar_chart <- reactive({
+#
+# })
