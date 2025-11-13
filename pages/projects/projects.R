@@ -5,6 +5,7 @@ source("pages/projects/tabs/details.R", local = TRUE)
 server_projects <- function(input, output) {
   server_details_projects_page(input, output)
   server_table_projects_page(input, output)
+  server_graph_projects_page(input, output, session)  
 }
 
 ui_projects <- fluidPage(

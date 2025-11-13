@@ -1,194 +1,128 @@
-source("./global.R")
+### Parameters
+p_entity_type <- "Researcher"
 
-# =============================================================
-# UI for the Graph Tab
-# =============================================================
+### UI
 ui_graph_projects_page <- sidebarLayout(
   sidebarPanel(
     selectInput(
-      "entity_type",
+      "projects_page_graph_entity_type",
       "Select type:",
-      choices = c("Researcher", "Company")
+      choices = c("Researcher", "Company"),
+      selected = p_entity_type
     ),
-    uiOutput("entity_select_ui"),
-    uiOutput("field_select_ui"),
+    uiOutput("projects_page_graph_entity_name_ui"),
+    uiOutput("projects_page_graph_field_ui"),
     hr(),
     h4("Node Information"),
-    tableOutput("node_info")
+    tableOutput("projects_page_graph_node_info_output"),
+    width = 3
   ),
   mainPanel(
-    visNetworkOutput("network_plot", height = "600px")
+    card(
+      visNetworkOutput("projects_page_graph_network_output", height = "650px"),
+      full_screen = TRUE
+    )
   )
 )
 
-# =============================================================
-# Server for the Graph Tab
-# =============================================================
+### Server
 server_graph_projects_page <- function(input, output, session) {
-  # --- Dynamic dropdown for researcher or company ---
-  output$entity_select_ui <- renderUI({
-    if (input$entity_type == "Researcher") {
+
+  # --- Dynamic selection UI ---
+  output$projects_page_graph_entity_name_ui <- renderUI({
+    req(input$projects_page_graph_entity_type)
+    if (input$projects_page_graph_entity_type == "Researcher") {
       selectInput(
-        "entity_name",
+        "projects_page_graph_entity_name",
         "Select Researcher:",
-        choices = unique(researchers_data$researcher_name)
+        choices = sort(unique(df_for_project_graph_network$researcher_name)),
+        selected = sort(unique(df_for_project_graph_network$researcher_name))[1]
       )
     } else {
       selectInput(
-        "entity_name",
+        "projects_page_graph_entity_name",
         "Select Company:",
-        choices = unique(company_data$company_name)
+        choices = sort(unique(df_for_project_graph_network$company_name)),
+        selected = sort(unique(df_for_project_graph_network$company_name))[1]
       )
     }
   })
 
-  # --- Field (project type) selection ---
-  output$field_select_ui <- renderUI({
+  output$projects_page_graph_field_ui <- renderUI({
     selectInput(
-      "selected_field",
+      "projects_page_graph_field",
       "Field of new project:",
-      choices = unique(projects_data$type)
+      choices = sort(unique(df_for_project_graph_network$project_type)),
+      selected = sort(unique(df_for_project_graph_network$project_type))[1]
     )
   })
 
-  # --- Reactive: Filter related projects based on field ---
-  related_data <- reactive({
-    req(input$selected_field)
-    filtered_projects <- filter_projects_by_field(projects_data, input$selected_field)
-    get_related_collaboration_data(filtered_projects)
+  # --- Reactive subset from DuckDB view ---
+  df_related_graph_data <- reactive({
+    req(input$projects_page_graph_field)
+    df_for_project_graph_network %>%
+      dplyr::filter(project_type == input$projects_page_graph_field)
   })
 
-  # =============================================================
-  # Build visNetwork graph dynamically based on selection type
-  # =============================================================
-  output$network_plot <- renderVisNetwork({
-    req(related_data(), input$entity_name)
+  # --- Build visNetwork graph ---
+  output$projects_page_graph_network_output <- renderVisNetwork({
+    req(df_related_graph_data(), input$projects_page_graph_entity_name)
+    rd <- df_related_graph_data()
 
-    rd <- related_data()
+    # --- Safe nodes ---
+    project_nodes <- rd %>%
+      dplyr::distinct(project_id, project_type) %>%
+      dplyr::transmute(
+        id = paste0("P_", project_id),
+        label = project_type,
+        group = "Project"
+      )
 
-    # --- Create base nodes ---
-    project_nodes <- data.frame(
-      id = paste0("P_", rd$projects$project_id),
-      label = rd$projects$type,
-      group = "Project"
-    )
+    researcher_nodes <- rd %>%
+      dplyr::distinct(researcher_id, researcher_name) %>%
+      dplyr::filter(!is.na(researcher_id)) %>%
+      dplyr::transmute(
+        id = paste0("R_", researcher_id),
+        label = researcher_name,
+        group = "Researcher"
+      )
 
-    researcher_nodes <- data.frame(
-      id = paste0("R_", rd$researchers$researcher_id),
-      label = rd$researchers$researcher_name,
-      group = "Researcher"
-    )
+    company_nodes <- rd %>%
+      dplyr::distinct(company_id, company_name) %>%
+      dplyr::filter(!is.na(company_id)) %>%
+      dplyr::transmute(
+        id = paste0("C_", company_id),
+        label = company_name,
+        group = "Company"
+      )
 
-    company_nodes <- data.frame(
-      id = paste0("C_", rd$companies$company_id),
-      label = rd$companies$company_name,
-      group = "Company"
-    )
+    nodes <- dplyr::bind_rows(project_nodes, researcher_nodes, company_nodes)
 
-    nodes <- dplyr::bind_rows(project_nodes, researcher_nodes, company_nodes) %>%
-      dplyr::distinct(id, .keep_all = TRUE)
+    # --- Edges ---
+    researcher_edges <- rd %>%
+      dplyr::filter(!is.na(researcher_id)) %>%
+      dplyr::transmute(from = paste0("R_", researcher_id),
+                       to = paste0("P_", project_id))
 
-    # --- Create edges (researcher-project, company-project) ---
-    researcher_edges <- rd$researchers %>%
-      dplyr::select(project_id, researcher_id) %>%
-      dplyr::mutate(
-        from = paste0("R_", researcher_id),
-        to = paste0("P_", project_id)
-      ) %>%
-      dplyr::select(from, to)
-
-    company_edges <- rd$companies %>%
-      dplyr::select(project_id, company_id) %>%
-      dplyr::mutate(
-        from = paste0("C_", company_id),
-        to = paste0("P_", project_id)
-      ) %>%
-      dplyr::select(from, to)
+    company_edges <- rd %>%
+      dplyr::filter(!is.na(company_id)) %>%
+      dplyr::transmute(from = paste0("C_", company_id),
+                       to = paste0("P_", project_id))
 
     edges <- dplyr::bind_rows(researcher_edges, company_edges)
 
-    # =============================================================
-    # Identify selected entity and build contextual subgraph
-    # =============================================================
-
-    if (input$entity_type == "Researcher") {
-      selected_node_id <- researcher_nodes %>%
-        dplyr::filter(label == input$entity_name) %>%
+    # --- Highlight neighborhood for selection ---
+    if (input$projects_page_graph_entity_type == "Researcher") {
+      selected_id <- researcher_nodes %>%
+        dplyr::filter(label == input$projects_page_graph_entity_name) %>%
         dplyr::pull(id)
-      req(selected_node_id)
-
-      # Step 1: projects this researcher is part of
-      researcher_projects <- edges %>%
-        dplyr::filter(from == selected_node_id | to == selected_node_id) %>%
-        dplyr::mutate(project_id = ifelse(grepl("^P_", from), from, to)) %>%
-        dplyr::pull(project_id) %>%
-        unique()
-
-      # Step 2: companies linked to those projects
-      connected_companies <- edges %>%
-        dplyr::filter(to %in% researcher_projects & grepl("^C_", from)) %>%
-        dplyr::pull(from) %>%
-        unique()
-
-      # Step 3: researchers linked to those companies (via shared projects)
-      related_projects <- edges %>%
-        dplyr::filter(from %in% connected_companies | to %in% connected_companies) %>%
-        dplyr::mutate(node = ifelse(grepl("^R_", from), from,
-          ifelse(grepl("^R_", to), to, NA)
-        )) %>%
-        dplyr::pull(node) %>%
-        unique()
-
-      # collect all node IDs to keep
-      neighborhood_node_ids <- unique(c(
-        selected_node_id, researcher_projects,
-        connected_companies, related_projects
-      ))
     } else {
-      selected_node_id <- company_nodes %>%
-        dplyr::filter(label == input$entity_name) %>%
+      selected_id <- company_nodes %>%
+        dplyr::filter(label == input$projects_page_graph_entity_name) %>%
         dplyr::pull(id)
-      req(selected_node_id)
-
-      # Step 1: projects this company is part of
-      company_projects <- edges %>%
-        dplyr::filter(from == selected_node_id | to == selected_node_id) %>%
-        dplyr::mutate(project_id = ifelse(grepl("^P_", from), from, to)) %>%
-        dplyr::pull(project_id) %>%
-        unique()
-
-      # Step 2: researchers linked to those projects
-      connected_researchers <- edges %>%
-        dplyr::filter(to %in% company_projects & grepl("^R_", from)) %>%
-        dplyr::pull(from) %>%
-        unique()
-
-      # Step 3: companies linked to those researchers (via shared projects)
-      related_projects <- edges %>%
-        dplyr::filter(from %in% connected_researchers | to %in% connected_researchers) %>%
-        dplyr::mutate(node = ifelse(grepl("^C_", from), from,
-          ifelse(grepl("^C_", to), to, NA)
-        )) %>%
-        dplyr::pull(node) %>%
-        unique()
-
-      # collect all node IDs to keep
-      neighborhood_node_ids <- unique(c(
-        selected_node_id, company_projects,
-        connected_researchers, related_projects
-      ))
     }
 
-    filtered_nodes <- nodes %>%
-      dplyr::filter(id %in% neighborhood_node_ids)
-
-    filtered_edges <- edges %>%
-      dplyr::filter(from %in% neighborhood_node_ids & to %in% neighborhood_node_ids)
-
-    # =============================================================
-    # Render network
-    # =============================================================
-    visNetwork(filtered_nodes, filtered_edges) %>%
+    visNetwork(nodes, edges) %>%
       visNodes(shape = "dot", size = 20) %>%
       visEdges(smooth = FALSE, arrows = "to") %>%
       visOptions(highlightNearest = TRUE, nodesIdSelection = FALSE) %>%
@@ -196,32 +130,34 @@ server_graph_projects_page <- function(input, output, session) {
       visEvents(
         stabilized = sprintf(
           "function() { this.focus('%s', {scale: 2.2, animation: true}); }",
-          selected_node_id
+          selected_id
         ),
         selectNode = "function(params) {
-          Shiny.onInputChange('selected_node_id', params.nodes[0]);
+          Shiny.onInputChange('projects_page_graph_selected_node_id', params.nodes[0]);
         }"
       )
   })
 
-  # =============================================================
-  # Node information display (table format)
-  # =============================================================
-  output$node_info <- renderTable({
-    req(input$selected_node_id)
-    rd <- related_data()
-    node_id <- input$selected_node_id
+  # --- Node info ---
+  output$projects_page_graph_node_info_output <- renderTable({
+    req(input$projects_page_graph_selected_node_id)
+    node_id <- input$projects_page_graph_selected_node_id
     type_prefix <- substr(node_id, 1, 1)
 
+    rd <- df_related_graph_data()
+
     if (type_prefix == "R") {
-      researcher_id <- sub("^R_", "", node_id)
-      rd$researchers %>% dplyr::filter(researcher_id == !!researcher_id)
+      rid <- sub("^R_", "", node_id)
+      rd %>% dplyr::filter(researcher_id == rid) %>%
+        dplyr::select(researcher_name, project_name, company_name)
     } else if (type_prefix == "C") {
-      company_id <- sub("^C_", "", node_id)
-      rd$companies %>% dplyr::filter(company_id == !!company_id)
+      cid <- sub("^C_", "", node_id)
+      rd %>% dplyr::filter(company_id == cid) %>%
+        dplyr::select(company_name, project_name, researcher_name)
     } else {
-      project_id <- sub("^P_", "", node_id)
-      rd$projects %>% dplyr::filter(project_id == !!project_id)
+      pid <- sub("^P_", "", node_id)
+      rd %>% dplyr::filter(project_id == pid) %>%
+        dplyr::select(project_name, project_type, researcher_name, company_name)
     }
   })
 }

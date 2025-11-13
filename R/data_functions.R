@@ -35,7 +35,7 @@ get_related_collaboration_data <- function(filtered_projects) {
   # Researchers linked to these projects
   rp <- research_participation_data %>%
     dplyr::inner_join(fp, by = "project_id") %>%
-    dplyr::inner_join(researchers_data, by = "researcher_id")
+    dplyr::inner_join(researchers_data, by = c("researcher_id" = "employee_id"))
 
   # Companies linked to these projects
   pb <- project_board_data %>%

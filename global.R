@@ -47,3 +47,6 @@ df_researchers_and_groups <- merge(researchers_data, research_groups_data, by.x=
 df_general <- dbGetQuery(con, q_df_general)
 df_general_with_project_fields <- dbGetQuery(con, q_df_general_with_project_fields)
 df_for_project_details_stacked_bar_chart <- dbGetQuery(con, q_df_for_project_details_stacked_bar_chart)
+
+# bq1_a1_data
+df_for_project_graph_network <- dbGetQuery(con, q_df_for_project_graph_network)

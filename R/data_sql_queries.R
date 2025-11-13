@@ -137,3 +137,46 @@ FROM df_researchers_and_companies_they_worked_with rac
 
 SELECT * FROM df_for_project_details_stacked_bar_chart;
 )"
+
+
+
+
+
+# bq1-a1 
+q_df_for_project_graph_network <- r"(
+CREATE OR REPLACE VIEW df_for_project_graph_network AS
+WITH researcher_links AS (
+    SELECT
+        r.employee_id AS researcher_id,
+        r.name AS researcher_name,
+        p.project_id,
+        p.name AS project_name,
+        p.type AS project_type
+    FROM research_participation rp
+    JOIN researchers r ON rp.researcher_id = r.employee_id
+    JOIN projects p ON rp.project_id = p.project_id
+),
+company_links AS (
+    SELECT
+        c.company_id,
+        c.name AS company_name,
+        p.project_id,
+        p.name AS project_name,
+        p.type AS project_type
+    FROM project_board pb
+    JOIN company_contacts cc ON pb.contact_id = cc.contact_id
+    JOIN companies c ON cc.company_id = c.company_id
+    JOIN projects p ON pb.project_id = p.project_id
+)
+SELECT
+    rl.project_id,
+    rl.project_name,
+    rl.project_type,
+    rl.researcher_id,
+    rl.researcher_name,
+    cl.company_id,
+    cl.company_name
+FROM researcher_links rl
+LEFT JOIN company_links cl USING (project_id);
+SELECT * FROM df_for_project_graph_network;
+)"
