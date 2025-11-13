@@ -27,3 +27,23 @@ research_participation_data <- read.csv("data/raw/Research_Participation.csv")
 researchers_data <- read.csv("data/raw/Researchers.csv")
 # sales_data <- read.csv("data/processed/sales_clean.csv") %>%
 #   mutate(date = as.Date(date))
+
+
+
+# DuckDB
+con <- dbConnect(duckdb())
+duckdb_register(con, "companies", company_data)
+duckdb_register(con, "company_contacts", company_contacts_data)
+duckdb_register(con, "project_board", project_board_data)
+duckdb_register(con, "projects", projects_data)
+duckdb_register(con, "research_groups", research_groups_data)
+duckdb_register(con, "research_participation", research_participation_data)
+duckdb_register(con, "researchers", researchers_data)
+
+# Custom views.
+df_researchers_and_groups <- merge(researchers_data, research_groups_data, by.x="main_research_group", by.y="group_id")
+
+# df_general_with_project_fields <- dbGetQuery(con, q_df_general)
+df_general <- dbGetQuery(con, q_df_general)
+df_general_with_project_fields <- dbGetQuery(con, q_df_general_with_project_fields)
+df_for_project_details_stacked_bar_chart <- dbGetQuery(con, q_df_for_project_details_stacked_bar_chart)
