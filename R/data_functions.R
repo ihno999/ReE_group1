@@ -45,3 +45,10 @@ get_related_collaboration_data <- function(filtered_projects) {
 
   list(projects = fp, researchers = rp, companies = pb)
 }
+
+
+
+
+# df_for_project_details_stacked_bar_chart <- reactive({
+#
+# })

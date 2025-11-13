@@ -1,17 +1,21 @@
 # Load required libraries
 library(shiny)
 library(DT)
+library(ggExtra)
 library(dplyr)
 library(visNetwork)
-# library(ggplot2)
-# library(lubridate)
+library(lubridate)
 library(bslib)
-# library(ggExtra)
+library(ggplot2)
+library(viridis)
+library(duckdb)
+library(forcats)
 
 # Source helper functions
 source("./R/data_functions.R")
 source("./R/plot_functions.R")
 source("./R/helper_functions.R")
+source("./R/data_sql_queries.R")
 
 # Load and prepare data once
 company_data <- read.csv("data/raw/Companies.csv")
@@ -23,6 +27,3 @@ research_participation_data <- read.csv("data/raw/Research_Participation.csv")
 researchers_data <- read.csv("data/raw/Researchers.csv")
 # sales_data <- read.csv("data/processed/sales_clean.csv") %>%
 #   mutate(date = as.Date(date))
-
-
-clean_column_names()
