@@ -1,348 +1,198 @@
 ### Parameters
-p_entity_type <- "Researcher"
+p_graph_type <- "Researcher"
+p_graph_selection <- "Kathleen Bailey"
+p_graph_project_fields <- c("Circular Economy", "Digital Education", "BioTech", "Cybersecurity")
 
 ### UI
-ui_graph_projects_page <- fluidPage(
-  tags$style(HTML("
-    /* Full height flex layout */
-    #graph_page_container {
-      display: flex;
-      align-items: stretch; /* make sidebar & main panel same height */
-    }
+ui_graph_projects_page <- sidebarLayout(
+  sidebarPanel(
+    selectInput(
+      "projects_page_graph_type",
+      "Select type:",
+      choices = c("Researcher", "Company"),
+      selected = p_graph_type
+    ),
+    uiOutput("projects_page_graph_selection_output"),
+    uiOutput("projects_page_graph_project_fields_checkboxes_output"),
+    width = 2
+  ),
+  mainPanel(
+    # --- GRAPH ---
+    card(
+      visNetworkOutput("projects_page_graph_network_output", height = "600px"),
+      full_screen = TRUE
+    ),
 
-    #projects_page_graph_node_info_container {
-      overflow-x: auto;
-      max-width: 100%;
-      border: 1px solid #ccc;
-      padding: 3px;
-      border-radius: 6px;
-      background: #fafafa;
-      overflow-y: auto;         /* vertical scroll if content exceeds height */
-      max-height: 600px;        /* limit sidebar height */
-    }
+    # --- LEGEND BELOW GRAPH ---
+    card(
+      div(
+        style = "display: flex; flex-direction: row; gap: 25px; padding: 15px; font-size: 14px; align-items: center;",
+        # Selected Researcher / Company
+        div(
+          style = "display:flex; align-items:center;",
+          div(style = "width:14px; height:14px; background:#4CAF50; border-radius:50%; margin-right:6px;"),
+          "Selected Researcher / Company"
+        ),
+        # Other Researchers
+        div(
+          style = "display:flex; align-items:center;",
+          div(style = "width:14px; height:14px; background:#FFC107; border-radius:50%; margin-right:6px;"),
+          "Other Researchers"
+        ),
+        # Projects
+        div(
+          style = "display:flex; align-items:center;",
+          div(style = "width:14px; height:14px; background:#2196F3; border-radius:50%; margin-right:6px;"),
+          "Projects"
+        ),
+        # Companies
+        div(
+          style = "display:flex; align-items:center;",
+          div(style = "width:14px; height:14px; background:#F44336; border-radius:50%; margin-right:6px;"),
+          "Companies"
+        )
+      )
+    ),
 
-    #projects_page_graph_node_info_output table {
-      table-layout: fixed;
-      width: 100%;
-      font-size: 12px;
-      border-collapse: collapse;
-    }
-
-    #projects_page_graph_node_info_output table th,
-    #projects_page_graph_node_info_output table td {
-      padding: 2px 6px;
-      text-align: left !important;
-      white-space: normal;
-      with: auto;
-    }
-
-    #projects_page_graph_node_info_output table th:nth-child(3),
-    #projects_page_graph_node_info_output table td:nth-child(3) {
-      width: 200px;
-      white-space: normal;
-    }
-  ")),
-  div(
-    id = "graph_page_container",
-    sidebarPanel(
-      selectInput(
-        "projects_page_graph_entity_type",
-        "Select type:",
-        choices = c("Researcher", "Company"),
-        selected = p_entity_type
-      ),
-      uiOutput("projects_page_graph_entity_name_ui"),
-      uiOutput("projects_page_graph_field_ui"),
-      hr(),
+    # --- NODE DETAILS ---
+    card(
       h4("Node Information"),
       div(
-        id = "projects_page_graph_node_info_container",
-        tableOutput("projects_page_graph_node_info_output")
-      ),
-      width = 3,
-      style = "flex: 1; display: flex; flex-direction: column; max-height: 600px; overflow-y: auto;"
+        dataTableOutput("projects_page_graph_node_info_output"),
+        style = "font-size:90%"
+      )
     ),
-    mainPanel(
-      card(
-        visNetworkOutput("projects_page_graph_network_output", height = "600px"),
-        full_screen = TRUE
+
+    # --- PROJECT DETAILS ---
+    card(
+      h4("Project Details"),
+      div(
+        dataTableOutput("projects_page_graph_network_df_output"),
+        style = "font-size:80%"
       ),
-      style = "flex: 3;"
+      full_screen = TRUE
     )
   )
 )
 
 ### SERVER
 server_graph_projects_page <- function(input, output, session) {
-  # ---- Dynamic UI: Researcher / Company names ----
-  output$projects_page_graph_entity_name_ui <- renderUI({
-    req(input$projects_page_graph_entity_type)
+  # --- Dynamic researcher/company selection ---
+  output$projects_page_graph_selection_output <- renderUI({
+    req(input$projects_page_graph_type)
 
-    if (input$projects_page_graph_entity_type == "Researcher") {
-      selectInput(
-        "projects_page_graph_entity_name",
-        "Select Researcher:",
-        choices = sort(unique(df_for_project_graph_network$researcher_name)),
-        selected = sort(unique(df_for_project_graph_network$researcher_name))[1]
-      )
+    if (input$projects_page_graph_type == "Researcher") {
+      researchers <- df_for_project_graph_network %>%
+        pull(researcher_name) %>%
+        unique() %>%
+        na.omit() %>%
+        sort()
+      selectInput("projects_page_graph_selection", "Select Researcher:", choices = researchers, selected = if (p_graph_selection %in% researchers) p_graph_selection else researchers[1])
     } else {
-      selectInput(
-        "projects_page_graph_entity_name",
-        "Select Company:",
-        choices = sort(unique(df_for_project_graph_network$company_name)),
-        selected = sort(unique(df_for_project_graph_network$company_name))[1]
-      )
+      companies <- df_for_project_graph_network %>%
+        pull(company_name) %>%
+        unique() %>%
+        na.omit() %>%
+        sort()
+      selectInput("projects_page_graph_selection", "Select Company:", choices = companies, selected = if (p_graph_selection %in% companies) p_graph_selection else companies[1])
     }
   })
 
-  output$projects_page_graph_field_ui <- renderUI({
-    selectInput(
-      "projects_page_graph_field",
-      "Field of new project:",
-      choices = sort(unique(df_for_project_graph_network$project_type)),
-      selected = sort(unique(df_for_project_graph_network$project_type))[1]
-    )
+  # --- Checkboxes for project fields (all fields always available) ---
+  output$projects_page_graph_project_fields_checkboxes_output <- renderUI({
+    validate(need("project_field" %in% names(df_for_project_graph_network), "Error: project_field column missing."))
+
+    all_fields <- df_for_project_graph_network %>%
+      pull(project_field) %>%
+      unique() %>%
+      na.omit() %>%
+      sort()
+    selected_fields <- intersect(p_graph_project_fields, all_fields)
+    if (length(selected_fields) == 0) selected_fields <- all_fields
+
+    checkboxGroupInput("projects_page_graph_project_fields_checkboxes", "Fields:", choices = all_fields, selected = selected_fields)
   })
 
-  # ============================================================================
-  # === REACTIVE: LOCALIZED EGO NETWORK DATASET ================================
-  # ============================================================================
+  # --- Filter dataset ---
+  df_filtered_for_graph <- reactive({
+    req(input$projects_page_graph_type, input$projects_page_graph_selection, input$projects_page_graph_project_fields_checkboxes)
 
-  df_related_graph_data <- reactive({
-    req(
-      input$projects_page_graph_entity_name,
-      input$projects_page_graph_entity_type,
-      input$projects_page_graph_field
-    )
+    if (input$projects_page_graph_type == "Researcher") {
+      # Projects of selected researcher in selected fields
+      projects <- df_for_project_graph_network %>%
+        filter(
+          researcher_name == input$projects_page_graph_selection,
+          project_field %in% input$projects_page_graph_project_fields_checkboxes
+        ) %>%
+        pull(project_id)
 
-    # Base filtered by project field
-    rd <- df_for_project_graph_network %>%
-      dplyr::filter(project_type == input$projects_page_graph_field)
-
-    if (input$projects_page_graph_entity_type == "Researcher") {
-      center <- input$projects_page_graph_entity_name
-
-      # --- Level 0: Researcher ---
-      L0_researcher <- center
-
-      # --- Level 1: Companies connected to center researcher ---
-      L1_companies <- rd %>%
-        dplyr::filter(researcher_name == center) %>%
-        dplyr::pull(company_name) %>%
-        unique()
-
-      # --- Level 2: Researchers who worked with these companies ---
-      L2_researchers <- rd %>%
-        dplyr::filter(company_name %in% L1_companies) %>%
-        dplyr::pull(researcher_name) %>%
-        unique()
-
-      # Keep only relevant rows:
-      rd %>%
-        dplyr::filter(
-          researcher_name %in% c(L0_researcher, L2_researchers) &
-            company_name %in% L1_companies
+      # All rows linked to these projects
+      df_for_project_graph_network %>%
+        filter(
+          project_id %in% projects,
+          project_field %in% input$projects_page_graph_project_fields_checkboxes
         )
     } else {
-      center <- input$projects_page_graph_entity_name
+      # Projects of selected company in selected fields
+      projects <- df_for_project_graph_network %>%
+        filter(
+          company_name == input$projects_page_graph_selection,
+          project_field %in% input$projects_page_graph_project_fields_checkboxes
+        ) %>%
+        pull(project_id)
 
-      # --- Level 0: Company ---
-      L0_company <- center
-
-      # --- Level 1: Researchers of this company ---
-      L1_researchers <- rd %>%
-        dplyr::filter(company_name == center) %>%
-        dplyr::pull(researcher_name) %>%
-        unique()
-
-      # --- Level 2: Companies that those researchers worked with ---
-      L2_companies <- rd %>%
-        dplyr::filter(researcher_name %in% L1_researchers) %>%
-        dplyr::pull(company_name) %>%
-        unique()
-
-      rd %>%
-        dplyr::filter(
-          company_name %in% c(L0_company, L2_companies) &
-            researcher_name %in% L1_researchers
+      # All rows linked to these projects
+      df_for_project_graph_network %>%
+        filter(
+          project_id %in% projects,
+          project_field %in% input$projects_page_graph_project_fields_checkboxes
         )
     }
   })
 
+  # --- Node info table (click node in graph) ---
+  output$projects_page_graph_node_info_output <- renderDataTable(
+    {
+      sel <- input$projects_page_graph_network_output_selected
+      if (is.null(sel) || is.null(sel$nodes) || length(sel$nodes) == 0) {
+        return(data.frame(Message = "Click a node in the graph"))
+      }
+      node_id <- sel$nodes[[1]]
 
-  # ============================================================================
-  # === NETWORK RENDERING ======================================================
-  # ============================================================================
+      graph_data <- prepare_network_graph_data(df_filtered_for_graph(), input$projects_page_graph_type, input$projects_page_graph_selection)
+      node <- graph_data$nodes %>% filter(id == node_id)
+      if (nrow(node) == 0) {
+        return(data.frame(Message = "No data for selected node"))
+      }
 
+      node %>% select(ID = id, Name = name, Type = type)
+    },
+    options = list(dom = "t", pageLength = 1)
+  )
+
+  # --- Graph (visNetwork) ---
   output$projects_page_graph_network_output <- renderVisNetwork({
-    req(df_related_graph_data(), input$projects_page_graph_entity_name)
-    rd <- df_related_graph_data()
+    req(nrow(df_filtered_for_graph()) > 0)
 
-    # -------- Nodes --------
-    project_nodes <- rd %>%
-      dplyr::distinct(project_id, project_type) %>%
-      dplyr::transmute(
-        id = paste0("P_", project_id),
-        label = project_type,
-        group = "Project"
-      )
+    graph_data <- prepare_network_graph_data(df_filtered_for_graph(), input$projects_page_graph_type, input$projects_page_graph_selection)
+    nodes <- graph_data$nodes %>% mutate(label = name, title = name)
+    edges <- graph_data$edges %>% mutate(width = 2, color = list(color = "gray"))
 
-    researcher_nodes <- rd %>%
-      dplyr::distinct(researcher_id, researcher_name) %>%
-      dplyr::filter(!is.na(researcher_id)) %>%
-      dplyr::transmute(
-        id = paste0("R_", researcher_id),
-        label = researcher_name,
-        group = "Researcher"
-      )
-
-    company_nodes <- rd %>%
-      dplyr::distinct(company_id, company_name) %>%
-      dplyr::filter(!is.na(company_id)) %>%
-      dplyr::transmute(
-        id = paste0("C_", company_id),
-        label = company_name,
-        group = "Company"
-      )
-
-    nodes <- dplyr::bind_rows(project_nodes, researcher_nodes, company_nodes)
-
-    # -------- Edges --------
-    researcher_edges <- rd %>%
-      dplyr::filter(!is.na(researcher_id)) %>%
-      dplyr::transmute(
-        from = paste0("R_", researcher_id),
-        to = paste0("P_", project_id)
-      )
-
-    company_edges <- rd %>%
-      dplyr::filter(!is.na(company_id)) %>%
-      dplyr::transmute(
-        from = paste0("C_", company_id),
-        to = paste0("P_", project_id)
-      )
-
-    edges <- dplyr::bind_rows(researcher_edges, company_edges)
-
-    # -------- Determine center node ID --------
-    if (input$projects_page_graph_entity_type == "Researcher") {
-      selected_id <- researcher_nodes %>%
-        dplyr::filter(label == input$projects_page_graph_entity_name) %>%
-        dplyr::pull(id)
-    } else {
-      selected_id <- company_nodes %>%
-        dplyr::filter(label == input$projects_page_graph_entity_name) %>%
-        dplyr::pull(id)
-    }
-
-    # -------- Build the network --------
-    visNetwork(nodes, edges) %>%
-      visNodes(shape = "dot", size = 20) %>%
-      visEdges(smooth = FALSE, arrows = "to") %>%
-      visOptions(highlightNearest = TRUE, nodesIdSelection = FALSE) %>%
-      visPhysics(stabilization = TRUE) %>%
-      visEvents(
-        stabilized = sprintf(
-          "function() { this.focus('%s', {scale: 2.2, animation: true}); }",
-          selected_id
-        ),
-        selectNode = "function(params) {
-          Shiny.onInputChange('projects_page_graph_selected_node_id', params.nodes[0]);
-        }"
-      )
+    visNetwork(nodes, edges, height = "600px") %>%
+      visNodes(shadow = TRUE, borderWidth = 1) %>%
+      visEdges(smooth = FALSE) %>%
+      visOptions(highlightNearest = TRUE) %>%
+      visEvents(select = "function(nodes) { Shiny.setInputValue('projects_page_graph_network_output_selected', nodes); }") %>%
+      visPhysics(solver = "forceAtlas2Based", stabilization = TRUE)
   })
 
-
-  # ============================================================================
-  # === NODE INFORMATION TABLE =================================================
-  # ============================================================================
-
-  # --- Node info box ---
-  output$projects_page_graph_node_info_output <- renderTable({
-    req(input$projects_page_graph_selected_node_id)
-    node_id <- input$projects_page_graph_selected_node_id
-    type_prefix <- substr(node_id, 1, 1)
-
-    # ===============================================================
-    # Researcher Node
-    # ===============================================================
-    if (type_prefix == "R") {
-      rid <- sub("^R_", "", node_id)
-
-      info <- researchers_data %>%
-        dplyr::filter(employee_id == rid) %>%
-        dplyr::distinct(
-          employee_id,
-          name,
-          main_research_group
-        ) %>%
-        dplyr::rename(
-          ID = employee_id,
-          Name = name,
-          `Main Research Group` = main_research_group
-        )
-
-      return(info)
-    }
-
-    # ===============================================================
-    # Company Node
-    # ===============================================================
-    else if (type_prefix == "C") {
-      cid <- sub("^C_", "", node_id)
-
-      info <- company_data %>%
-        dplyr::filter(company_id == cid) %>%
-        dplyr::distinct(
-          company_id,
-          name,
-          sectors,
-          size,
-          description
-        ) %>%
-        dplyr::rename(
-          ID = company_id,
-          Name = name,
-          Sectors = sectors,
-          Size = size,
-          Description = description
-        )
-
-      return(info)
-    }
-
-    # ===============================================================
-    # Project Node
-    # ===============================================================
-    else {
-      pid <- sub("^P_", "", node_id)
-
-      info <- projects_data %>%
-        dplyr::filter(project_id == pid) %>%
-        dplyr::distinct(
-          name,
-          type,
-          description,
-          responsible_group,
-          responsible_employee,
-          funding_source,
-          total_budget,
-          start_date,
-          end_date
-        ) %>%
-        dplyr::rename(
-          Project = name,
-          Type = type,
-          Description = description,
-          `Responsible Group` = responsible_group,
-          `Responsible Employee` = responsible_employee,
-          Funding = funding_source,
-          Budget = total_budget,
-          `Start Date` = start_date,
-          `End Date` = end_date
-        )
-
-      return(info)
-    }
-  })
+  # --- Project details table ---
+  output$projects_page_graph_network_df_output <- renderDataTable(
+    {
+      df_filtered_for_graph() %>%
+        select(project_name, project_field, researcher_name, company_name) %>%
+        arrange(project_field, project_name)
+    },
+    filter = "top"
+  )
 }
