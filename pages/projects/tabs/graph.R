@@ -2,25 +2,72 @@
 p_entity_type <- "Researcher"
 
 ### UI
-ui_graph_projects_page <- sidebarLayout(
-  sidebarPanel(
-    selectInput(
-      "projects_page_graph_entity_type",
-      "Select type:",
-      choices = c("Researcher", "Company"),
-      selected = p_entity_type
+ui_graph_projects_page <- fluidPage(
+  tags$style(HTML("
+    /* Full height flex layout */
+    #graph_page_container {
+      display: flex;
+      align-items: stretch; /* make sidebar & main panel same height */
+    }
+
+    #projects_page_graph_node_info_container {
+      overflow-x: auto;
+      max-width: 100%;
+      border: 1px solid #ccc;
+      padding: 3px;
+      border-radius: 6px;
+      background: #fafafa;
+      overflow-y: auto;         /* vertical scroll if content exceeds height */
+      max-height: 600px;        /* limit sidebar height */
+    }
+
+    #projects_page_graph_node_info_output table {
+      table-layout: fixed;
+      width: 100%;
+      font-size: 12px;
+      border-collapse: collapse;
+    }
+
+    #projects_page_graph_node_info_output table th,
+    #projects_page_graph_node_info_output table td {
+      padding: 2px 6px;
+      text-align: left !important;
+      white-space: normal;
+      with: auto;
+    }
+
+    #projects_page_graph_node_info_output table th:nth-child(3),
+    #projects_page_graph_node_info_output table td:nth-child(3) {
+      width: 200px;
+      white-space: normal;
+    }
+  ")),
+  div(
+    id = "graph_page_container",
+    sidebarPanel(
+      selectInput(
+        "projects_page_graph_entity_type",
+        "Select type:",
+        choices = c("Researcher", "Company"),
+        selected = p_entity_type
+      ),
+      uiOutput("projects_page_graph_entity_name_ui"),
+      uiOutput("projects_page_graph_field_ui"),
+      hr(),
+      h4("Node Information"),
+      div(
+        id = "projects_page_graph_node_info_container",
+        tableOutput("projects_page_graph_node_info_output")
+      ),
+      width = 3,
+      style = "flex: 1; display: flex; flex-direction: column; max-height: 600px; overflow-y: auto;"
     ),
-    uiOutput("projects_page_graph_entity_name_ui"),
-    uiOutput("projects_page_graph_field_ui"),
-    hr(),
-    h4("Node Information"),
-    tableOutput("projects_page_graph_node_info_output"),
-    width = 3
-  ),
-  mainPanel(
-    card(
-      visNetworkOutput("projects_page_graph_network_output", height = "650px"),
-      full_screen = TRUE
+    mainPanel(
+      card(
+        visNetworkOutput("projects_page_graph_network_output", height = "600px"),
+        full_screen = TRUE
+      ),
+      style = "flex: 3;"
     )
   )
 )
@@ -210,28 +257,92 @@ server_graph_projects_page <- function(input, output, session) {
   # === NODE INFORMATION TABLE =================================================
   # ============================================================================
 
+  # --- Node info box ---
   output$projects_page_graph_node_info_output <- renderTable({
     req(input$projects_page_graph_selected_node_id)
     node_id <- input$projects_page_graph_selected_node_id
     type_prefix <- substr(node_id, 1, 1)
 
-    rd <- df_related_graph_data()
-
+    # ===============================================================
+    # Researcher Node
+    # ===============================================================
     if (type_prefix == "R") {
       rid <- sub("^R_", "", node_id)
-      rd %>%
-        dplyr::filter(researcher_id == rid) %>%
-        dplyr::select(researcher_name, project_name, company_name)
-    } else if (type_prefix == "C") {
+
+      info <- researchers_data %>%
+        dplyr::filter(employee_id == rid) %>%
+        dplyr::distinct(
+          employee_id,
+          name,
+          main_research_group
+        ) %>%
+        dplyr::rename(
+          ID = employee_id,
+          Name = name,
+          `Main Research Group` = main_research_group
+        )
+
+      return(info)
+    }
+
+    # ===============================================================
+    # Company Node
+    # ===============================================================
+    else if (type_prefix == "C") {
       cid <- sub("^C_", "", node_id)
-      rd %>%
+
+      info <- company_data %>%
         dplyr::filter(company_id == cid) %>%
-        dplyr::select(company_name, project_name, researcher_name)
-    } else {
+        dplyr::distinct(
+          company_id,
+          name,
+          sectors,
+          size,
+          description
+        ) %>%
+        dplyr::rename(
+          ID = company_id,
+          Name = name,
+          Sectors = sectors,
+          Size = size,
+          Description = description
+        )
+
+      return(info)
+    }
+
+    # ===============================================================
+    # Project Node
+    # ===============================================================
+    else {
       pid <- sub("^P_", "", node_id)
-      rd %>%
+
+      info <- projects_data %>%
         dplyr::filter(project_id == pid) %>%
-        dplyr::select(project_name, project_type, researcher_name, company_name)
+        dplyr::distinct(
+          name,
+          type,
+          description,
+          responsible_group,
+          responsible_employee,
+          funding_source,
+          total_budget,
+          start_date,
+          end_date
+        ) %>%
+        dplyr::rename(
+          Project = name,
+          Type = type,
+          Description = description,
+          `Responsible Group` = responsible_group,
+          `Responsible Employee` = responsible_employee,
+          Funding = funding_source,
+          Budget = total_budget,
+          `Start Date` = start_date,
+          `End Date` = end_date
+        )
+
+      return(info)
     }
   })
 }
