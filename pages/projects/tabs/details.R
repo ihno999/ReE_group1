@@ -1,19 +1,20 @@
 ### Parameters
-p_researcher_name <- "Kathleen Bailey"
+# p_researcher_name <- "Kathleen Bailey"
 p_project_fields <- c('Circular Economy', 'Digital Education', 'BioTech', 'Cybersecurity')
 
 
 ### UI
 ui_details_projects_page <- sidebarLayout(
   sidebarPanel(
-    textInput("projects_page_details_researcher_name", "Researcher name", p_researcher_name),
+    uiOutput("projects_page_details_researcher_name_output"),
     uiOutput('projects_page_details_project_fields_checkboxes_output'),
     width=2
   ),
   mainPanel(
     card(tableOutput("projects_page_details_stacked_bar_chart_table_output")),
     card(plotOutput('projects_page_details_stacked_bar_chart_output'), full_screen=TRUE),
-    card(div(dataTableOutput("projects_page_details_stacked_bar_chart_df_output"), style = "font-size:80%"), full_screen=TRUE)
+    card(div(dataTableOutput("projects_page_details_stacked_bar_chart_df_output"), style = "font-size:80%"), full_screen=TRUE),
+    card(verbatimTextOutput("projects_page_graph_selection_output_23"))
   )
 )
 
@@ -27,6 +28,15 @@ server_details_projects_page <- function(input, output) {
         "Fields:", project_fields %>% unlist(use.names = FALSE),
       selected=p_project_fields
     )
+  })
+
+  output$projects_page_details_researcher_name_output <- renderUI({
+    # textInput("projects_page_details_researcher_name", "Researcher name", p_researchers_name)
+    textInput("projects_page_details_researcher_name", "Researcher name", input$projects_page_graph_selection)
+  })
+
+  output$projects_page_graph_selection_output_23 <- renderText({
+    input$projects_page_graph_selection
   })
 
   df_filtered_for_project_details_stacked_bar_chart <- reactive({
