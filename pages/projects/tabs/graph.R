@@ -190,7 +190,7 @@ server_graph_projects_page <- function(input, output, session) {
   output$projects_page_graph_network_df_output <- renderDataTable(
     {
       df_filtered_for_graph() %>%
-        select(project_name, project_field, researcher_name, company_name) %>%
+        select(project_id, project_name, project_field, researcher_name, company_name) %>%
         arrange(project_field, project_name)
     },
     filter = "top"

@@ -21,12 +21,14 @@ ui_details_projects_page <- sidebarLayout(
 
 ### Server
 server_details_projects_page <- function(input, output) {
+
   output$projects_page_details_project_fields_checkboxes_output <- renderUI({
     project_fields <- distinct(df_for_project_details_stacked_bar_chart, project_field)
     checkboxGroupInput(
       "projects_page_details_project_fields_checkboxes",
-        "Fields:", project_fields %>% unlist(use.names = FALSE),
-      selected=p_project_fields
+        "Fields:", project_fields %>% unlist(use.names = FALSE) %>% sort(),
+      selected=input$projects_page_graph_project_fields_checkboxes
+      # selected=projects_page_graph_project_fields_checkboxes
     )
   })
 
@@ -36,7 +38,7 @@ server_details_projects_page <- function(input, output) {
   })
 
   output$projects_page_graph_selection_output_23 <- renderText({
-    input$projects_page_graph_selection
+    input$projects_page_graph_project_fields_checkboxes
   })
 
   df_filtered_for_project_details_stacked_bar_chart <- reactive({
