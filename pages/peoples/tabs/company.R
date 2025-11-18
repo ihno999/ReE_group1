@@ -2,7 +2,7 @@ ui_table_company <- sidebarLayout(
     sidebarPanel(
         h4("Side Panel"),
         selectInput("select_company", "Select a company:", 
-            choices = c("", unique(researchers_data$name)))
+            choices = c("", unique(company_data$name)))
     ),
     mainPanel(
         h3("Company Overview"),
