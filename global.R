@@ -4,8 +4,8 @@ library(DT)
 # library(ggplot2)
 # library(dplyr)
 # library(lubridate)
-# library(bslib)
-# library(ggExtra)
+library(bslib)
+# library(ggExtra)0
 
 # Source helper functions
 source("./R/data_functions.R")
