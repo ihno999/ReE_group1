@@ -8,7 +8,7 @@ server_peoples <- function(input, output) {
 
 ui_peoples <- fluidPage(
     tabsetPanel(
-        tabPanel("People", ui_table_people),
-        tabPanel("Company", ui_table_company)
+        tabPanel("Company", ui_table_company),
+        tabPanel("People", ui_table_people)
     )
 )
