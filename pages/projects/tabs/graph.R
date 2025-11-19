@@ -1,6 +1,6 @@
 ### Parameters
 p_graph_type <- "Researcher"
-p_graph_selection <- "Kathleen Bailey"
+p_graph_selection <- "All researchers"
 p_graph_project_fields <- c("Circular Economy", "Digital Education", "BioTech", "Cybersecurity")
 
 ### UI
@@ -61,18 +61,7 @@ ui_graph_projects_page <- sidebarLayout(
         dataTableOutput("projects_page_graph_node_info_output"),
         style = "font-size:90%"
       )
-    ),
-
-    # --- PROJECT DETAILS ---
-    # Project details are moved to the details tab.
-    # card(
-    #   h4("Project Details"),
-    #   div(
-    #     dataTableOutput("projects_page_graph_network_df_output"),
-    #     style = "font-size:80%"
-    #   ),
-    #   full_screen = TRUE
-    # )
+    )
   )
 )
 
@@ -88,7 +77,14 @@ server_graph_projects_page <- function(input, output, session) {
         unique() %>%
         na.omit() %>%
         sort()
-      selectInput("projects_page_graph_selection", "Select Researcher:", choices = researchers, selected = if (p_graph_selection %in% researchers) p_graph_selection else researchers[1])
+      # include "All researchers" option
+      choices <- c("All researchers", researchers)
+      selectInput(
+        "projects_page_graph_selection",
+        "Select Researcher:",
+        choices = choices,
+        selected = if (p_graph_selection %in% choices) p_graph_selection else choices[1]
+      )
     } else {
       companies <- df_for_project_graph_network %>%
         pull(company_name) %>%
@@ -119,13 +115,21 @@ server_graph_projects_page <- function(input, output, session) {
     req(input$projects_page_graph_type, input$projects_page_graph_selection, input$projects_page_graph_project_fields_checkboxes)
 
     if (input$projects_page_graph_type == "Researcher") {
-      # Projects of selected researcher in selected fields
-      projects <- df_for_project_graph_network %>%
-        filter(
-          researcher_name == input$projects_page_graph_selection,
-          project_field %in% input$projects_page_graph_project_fields_checkboxes
-        ) %>%
-        pull(project_id)
+      # If "All researchers" selected -> include all projects in selected fields
+      if (!is.null(input$projects_page_graph_selection) && input$projects_page_graph_selection == "All researchers") {
+        projects <- df_for_project_graph_network %>%
+          filter(project_field %in% input$projects_page_graph_project_fields_checkboxes) %>%
+          pull(project_id) %>%
+          unique()
+      } else {
+        # Projects of selected researcher in selected fields
+        projects <- df_for_project_graph_network %>%
+          filter(
+            researcher_name == input$projects_page_graph_selection,
+            project_field %in% input$projects_page_graph_project_fields_checkboxes
+          ) %>%
+          pull(project_id)
+      }
 
       # All rows linked to these projects
       df_for_project_graph_network %>%
@@ -161,7 +165,15 @@ server_graph_projects_page <- function(input, output, session) {
       }
       node_id <- sel$nodes[[1]]
 
-      graph_data <- prepare_network_graph_data(df_filtered_for_graph(), input$projects_page_graph_type, input$projects_page_graph_selection)
+      selected_name_for_graph <- if (!is.null(input$projects_page_graph_selection) &&
+        input$projects_page_graph_selection == "All researchers" &&
+        input$projects_page_graph_type == "Researcher") {
+        NULL
+      } else {
+        input$projects_page_graph_selection
+      }
+
+      graph_data <- prepare_network_graph_data(df_filtered_for_graph(), input$projects_page_graph_type, selected_name_for_graph)
       node <- graph_data$nodes %>% filter(id == node_id)
       if (nrow(node) == 0) {
         return(data.frame(Message = "No data for selected node"))
@@ -176,7 +188,15 @@ server_graph_projects_page <- function(input, output, session) {
   output$projects_page_graph_network_output <- renderVisNetwork({
     req(nrow(df_filtered_for_graph()) > 0)
 
-    graph_data <- prepare_network_graph_data(df_filtered_for_graph(), input$projects_page_graph_type, input$projects_page_graph_selection)
+    selected_name_for_graph <- if (!is.null(input$projects_page_graph_selection) &&
+      input$projects_page_graph_selection == "All researchers" &&
+      input$projects_page_graph_type == "Researcher") {
+      NULL
+    } else {
+      input$projects_page_graph_selection
+    }
+
+    graph_data <- prepare_network_graph_data(df_filtered_for_graph(), input$projects_page_graph_type, selected_name_for_graph)
     nodes <- graph_data$nodes %>% mutate(label = name, title = name)
     edges <- graph_data$edges %>% mutate(width = 2, color = list(color = "gray"))
 
@@ -191,7 +211,6 @@ server_graph_projects_page <- function(input, output, session) {
   # --- Project details table ---
   rval_projects_page_graph_network_df_output <- reactive({
     df_filtered_for_graph() %>%
-      # select(project_id, project_name, project_field, researcher_name, company_name) %>%
       arrange(project_field, project_name)
   })
 
@@ -204,10 +223,19 @@ server_graph_projects_page <- function(input, output, session) {
 
 
   rval_projects_page_graph_network_df_output_2 <- reactive({
-    rval_projects_page_graph_network_df_output() %>%
-      filter(researcher_name == input$projects_page_graph_selection) %>%
+    data <- rval_projects_page_graph_network_df_output()
+    # If "All researchers" selected, don't filter by researcher name
+    if (!is.null(input$projects_page_graph_selection) && input$projects_page_graph_selection == "All researchers") {
+      filtered <- data
+    } else {
+      filtered <- data %>% filter(researcher_name == input$projects_page_graph_selection)
+    }
+
+    filtered %>%
       cbind(sum_digit = 1) %>%
-      group_by(company_name) %>% mutate(sort_digit = n()) %>% ungroup()
+      group_by(company_name) %>%
+      mutate(sort_digit = n()) %>%
+      ungroup()
   })
 
   projects_page_graph_network_df_output_2 <- renderDataTable(
@@ -219,13 +247,12 @@ server_graph_projects_page <- function(input, output, session) {
 
 
   output$projects_page_details_stacked_bar_chart_output <- renderPlot({
-    # ggplot(df_filtered_for_project_details_stacked_bar_chart(), aes(fill=project_field, y=sort_digit, x=fct_reorder(company_name, desc(sort_digit)))) +
-    ggplot(rval_projects_page_graph_network_df_output_2(), aes(fill=project_field, y=sum_digit, x=reorder(company_name, -sort_digit))) +
-      geom_bar(position="stack", stat="identity", width=0.8) +
-      xlab("Company") + ylab("Projects count") +
+    ggplot(rval_projects_page_graph_network_df_output_2(), aes(fill = project_field, y = sum_digit, x = reorder(company_name, -sort_digit))) +
+      geom_bar(position = "stack", stat = "identity", width = 0.8) +
+      xlab("Company") +
+      ylab("Projects count") +
       theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
-      theme(text=element_text(size=16)) +
+      theme(text = element_text(size = 16)) +
       ggtitle("Researcher's projects in different companies and fields")
   })
-
 }
