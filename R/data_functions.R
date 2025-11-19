@@ -54,6 +54,10 @@ get_related_collaboration_data <- function(filtered_projects) {
 # ----------------------------
 
 prepare_network_graph_data <- function(filtered_data, view_type = "Researcher", selected_name = NULL) {
+  # Determine whether we should highlight a researcher or company
+  highlight_researcher <- !is.null(selected_name) && view_type == "Researcher"
+  highlight_company <- !is.null(selected_name) && view_type == "Company"
+
   # ---- Researchers ----
   researchers <- filtered_data %>%
     select(id = researcher_id, name = researcher_name) %>%
@@ -62,15 +66,18 @@ prepare_network_graph_data <- function(filtered_data, view_type = "Researcher", 
     mutate(
       id = as.character(id),
       type = "researcher",
-      color = if_else(
-        name == selected_name & view_type == "Researcher",
-        "#4CAF50",
+      # If we are highlighting a researcher, do a vectorized comparison.
+      # Otherwise assign the default color/size (no comparison to NULL).
+      color = if (highlight_researcher) {
+        if_else(name == selected_name, "#4CAF50", "#FFC107")
+      } else {
         "#FFC107"
-      ),
-      size = if_else(
-        name == selected_name & view_type == "Researcher",
-        20, 15
-      )
+      },
+      size = if (highlight_researcher) {
+        if_else(name == selected_name, 20, 15)
+      } else {
+        15
+      }
     )
 
   # ---- Projects ----
@@ -92,15 +99,16 @@ prepare_network_graph_data <- function(filtered_data, view_type = "Researcher", 
     mutate(
       id = as.character(id),
       type = "company",
-      color = if_else(
-        name == selected_name & view_type == "Company",
-        "#4CAF50",
+      color = if (highlight_company) {
+        if_else(name == selected_name, "#4CAF50", "#F44336")
+      } else {
         "#F44336"
-      ),
-      size = if_else(
-        name == selected_name & view_type == "Company",
-        20, 15
-      )
+      },
+      size = if (highlight_company) {
+        if_else(name == selected_name, 20, 15)
+      } else {
+        15
+      }
     )
 
   nodes <- bind_rows(researchers, projects, companies)
