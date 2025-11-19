@@ -1,6 +1,8 @@
 # Load required libraries
 library(shiny)
 library(DT)
+
+# library(ggExtra)0
 library(ggExtra)
 library(dplyr)
 library(visNetwork)
@@ -25,7 +27,7 @@ project_board_data <- read.csv("data/raw/Project_Board.csv")
 projects_data <- read.csv("data/raw/Projects.csv")
 research_groups_data <- read.csv("data/raw/Research_Groups.csv")
 research_participation_data <- read.csv("data/raw/Research_Participation.csv")
-researchers_data <- read.csv("data/raw/Researchers.csv")
+researchers_data <- read.csv("data/raw/Researchers.csv", stringsAsFactors = FALSE, check.names = TRUE)
 # sales_data <- read.csv("data/processed/sales_clean.csv") %>%
 #   mutate(date = as.Date(date))
 
