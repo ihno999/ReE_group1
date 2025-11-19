@@ -13,8 +13,8 @@ ui_details_projects_page <- sidebarLayout(
   mainPanel(
     card(tableOutput("projects_page_details_stacked_bar_chart_table_output")),
     card(plotOutput('projects_page_details_stacked_bar_chart_output'), full_screen=TRUE),
-    card(div(dataTableOutput("projects_page_details_stacked_bar_chart_df_output"), style = "font-size:80%"), full_screen=TRUE),
-    card(verbatimTextOutput("projects_page_graph_selection_output_23")),
+    # card(div(dataTableOutput("projects_page_details_stacked_bar_chart_df_output"), style = "font-size:80%"), full_screen=TRUE),
+    # card(verbatimTextOutput("projects_page_graph_selection_output_23")),
     card(
       h4("Project Details"),
       div(

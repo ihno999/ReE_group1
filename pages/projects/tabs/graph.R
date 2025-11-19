@@ -64,14 +64,15 @@ ui_graph_projects_page <- sidebarLayout(
     ),
 
     # --- PROJECT DETAILS ---
-    card(
-      h4("Project Details"),
-      div(
-        dataTableOutput("projects_page_graph_network_df_output"),
-        style = "font-size:80%"
-      ),
-      full_screen = TRUE
-    )
+    # Project details are moved to the details tab.
+    # card(
+    #   h4("Project Details"),
+    #   div(
+    #     dataTableOutput("projects_page_graph_network_df_output"),
+    #     style = "font-size:80%"
+    #   ),
+    #   full_screen = TRUE
+    # )
   )
 )
 
