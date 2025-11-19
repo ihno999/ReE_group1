@@ -64,14 +64,15 @@ ui_graph_projects_page <- sidebarLayout(
     ),
 
     # --- PROJECT DETAILS ---
-    card(
-      h4("Project Details"),
-      div(
-        dataTableOutput("projects_page_graph_network_df_output"),
-        style = "font-size:80%"
-      ),
-      full_screen = TRUE
-    )
+    # Project details are moved to the details tab.
+    # card(
+    #   h4("Project Details"),
+    #   div(
+    #     dataTableOutput("projects_page_graph_network_df_output"),
+    #     style = "font-size:80%"
+    #   ),
+    #   full_screen = TRUE
+    # )
   )
 )
 
@@ -131,7 +132,8 @@ server_graph_projects_page <- function(input, output, session) {
         filter(
           project_id %in% projects,
           project_field %in% input$projects_page_graph_project_fields_checkboxes
-        )
+        ) %>%
+        distinct(.keep_all = TRUE)
     } else {
       # Projects of selected company in selected fields
       projects <- df_for_project_graph_network %>%
@@ -187,12 +189,43 @@ server_graph_projects_page <- function(input, output, session) {
   })
 
   # --- Project details table ---
-  output$projects_page_graph_network_df_output <- renderDataTable(
-    {
-      df_filtered_for_graph() %>%
-        select(project_name, project_field, researcher_name, company_name) %>%
-        arrange(project_field, project_name)
-    },
+  rval_projects_page_graph_network_df_output <- reactive({
+    df_filtered_for_graph() %>%
+      # select(project_id, project_name, project_field, researcher_name, company_name) %>%
+      arrange(project_field, project_name)
+  })
+
+
+  projects_page_graph_network_df_output <- renderDataTable(
+    rval_projects_page_graph_network_df_output(),
     filter = "top"
   )
+  output$projects_page_graph_network_df_output <- projects_page_graph_network_df_output
+
+
+  rval_projects_page_graph_network_df_output_2 <- reactive({
+    rval_projects_page_graph_network_df_output() %>%
+      filter(researcher_name == input$projects_page_graph_selection) %>%
+      cbind(sum_digit = 1) %>%
+      group_by(company_name) %>% mutate(sort_digit = n()) %>% ungroup()
+  })
+
+  projects_page_graph_network_df_output_2 <- renderDataTable(
+    rval_projects_page_graph_network_df_output_2(),
+    filter = "top"
+  )
+
+  output$projects_page_graph_network_df_output_2 <- projects_page_graph_network_df_output_2
+
+
+  output$projects_page_details_stacked_bar_chart_output <- renderPlot({
+    # ggplot(df_filtered_for_project_details_stacked_bar_chart(), aes(fill=project_field, y=sort_digit, x=fct_reorder(company_name, desc(sort_digit)))) +
+    ggplot(rval_projects_page_graph_network_df_output_2(), aes(fill=project_field, y=sum_digit, x=reorder(company_name, -sort_digit))) +
+      geom_bar(position="stack", stat="identity", width=0.8) +
+      xlab("Company") + ylab("Projects count") +
+      theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+      theme(text=element_text(size=16)) +
+      ggtitle("Researcher's projects in different companies and fields")
+  })
+
 }
