@@ -17,7 +17,7 @@ Install required packages:
 [//]: # ( - `R> install.packages&#40;"renv"&#41;`)
  - `R> renv::restore()`
 
-Run the app with `R> shiny::runApp("./", launch.browser=FALSE, port = 8080)`
+Run the app with `R> shiny::runApp()`
 
 
 
