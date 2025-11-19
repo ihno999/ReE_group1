@@ -1,18 +1,19 @@
+# ...existing code...
 ### Parameters
 # p_researcher_name <- "Kathleen Bailey"
-p_project_fields <- c('Circular Economy', 'Digital Education', 'BioTech', 'Cybersecurity')
+p_project_fields <- c("Circular Economy", "Digital Education", "BioTech", "Cybersecurity")
 
 
 ### UI
 ui_details_projects_page <- sidebarLayout(
   sidebarPanel(
     uiOutput("projects_page_details_researcher_name_output"),
-    uiOutput('projects_page_details_project_fields_checkboxes_output'),
-    width=2
+    uiOutput("projects_page_details_project_fields_checkboxes_output"),
+    width = 2
   ),
   mainPanel(
     card(tableOutput("projects_page_details_stacked_bar_chart_table_output")),
-    card(plotOutput('projects_page_details_stacked_bar_chart_output'), full_screen=TRUE),
+    card(plotOutput("projects_page_details_stacked_bar_chart_output"), full_screen = TRUE),
     # card(div(dataTableOutput("projects_page_details_stacked_bar_chart_df_output"), style = "font-size:80%"), full_screen=TRUE),
     # card(verbatimTextOutput("projects_page_graph_selection_output_23")),
     card(
@@ -33,8 +34,8 @@ server_details_projects_page <- function(input, output) {
     project_fields <- distinct(df_for_project_details_stacked_bar_chart, project_field)
     checkboxGroupInput(
       "projects_page_details_project_fields_checkboxes",
-        "Fields:", project_fields %>% unlist(use.names = FALSE) %>% sort(),
-      selected=input$projects_page_graph_project_fields_checkboxes
+      "Fields:", project_fields %>% unlist(use.names = FALSE) %>% sort(),
+      selected = input$projects_page_graph_project_fields_checkboxes
       # selected=projects_page_graph_project_fields_checkboxes
     )
   })
@@ -56,12 +57,23 @@ server_details_projects_page <- function(input, output) {
   })
 
   output$projects_page_details_stacked_bar_chart_output <- renderPlot({
-    # ggplot(df_filtered_for_project_details_stacked_bar_chart(), aes(fill=project_field, y=sort_digit, x=fct_reorder(company_name, desc(sort_digit)))) +
-    ggplot(df_filtered_for_project_details_stacked_bar_chart(), aes(fill=project_field, y=sort_digit, x=fct_reorder(company_name, desc(sort_digit)))) +
-      geom_bar(position="stack", stat="identity", width=0.8) +
-      xlab("Company") + ylab("Projects count") +
+    # Ensure required inputs are available so plot updates when they change
+    req(input$projects_page_details_researcher_name)
+    req(input$projects_page_details_project_fields_checkboxes)
+
+    plot_df <- df_filtered_for_project_details_stacked_bar_chart()
+
+    # Show a message in the plot area when there's no data to plot
+    validate(
+      need(nrow(plot_df) > 0, "No data available for the selected researcher / fields")
+    )
+
+    ggplot(plot_df, aes(fill = project_field, y = sort_digit, x = fct_reorder(company_name, desc(sort_digit)))) +
+      geom_bar(position = "stack", stat = "identity", width = 0.8) +
+      xlab("Company") +
+      ylab("Projects count") +
       theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
-      theme(text=element_text(size=16)) +
+      theme(text = element_text(size = 16)) +
       ggtitle("Researcher's projects in different companies and fields")
   })
 
@@ -80,5 +92,10 @@ server_details_projects_page <- function(input, output) {
     df_researcher_details %>% filter(Name == input$projects_page_details_researcher_name)
   })
 
-  output$projects_page_details_stacked_bar_chart_df_output <- renderDataTable({ df_filtered_for_project_details_stacked_bar_chart() }, filter='top')
+  output$projects_page_details_stacked_bar_chart_df_output <- renderDataTable(
+    {
+      df_filtered_for_project_details_stacked_bar_chart()
+    },
+    filter = "top"
+  )
 }
