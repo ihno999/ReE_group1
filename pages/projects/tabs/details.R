@@ -29,20 +29,42 @@ ui_details_projects_page <- sidebarLayout(
 
 
 ### Server
-server_details_projects_page <- function(input, output) {
+# signature includes session and shared reactive state rv
+server_details_projects_page <- function(input, output, session, rv) {
   output$projects_page_details_project_fields_checkboxes_output <- renderUI({
-    project_fields <- distinct(df_for_project_details_stacked_bar_chart, project_field)
+    project_fields <- distinct(df_for_project_details_stacked_bar_chart, project_field) %>%
+      unlist(use.names = FALSE) %>%
+      sort()
+
+    # determine selected values: prefer shared rv, then graph inputs, then defaults
+    if (!is.null(rv$fields)) {
+      selected_vals <- intersect(rv$fields, project_fields)
+      if (length(selected_vals) == 0) selected_vals <- project_fields
+    } else if (!is.null(input$projects_page_graph_project_fields_checkboxes)) {
+      selected_vals <- intersect(input$projects_page_graph_project_fields_checkboxes, project_fields)
+      if (length(selected_vals) == 0) selected_vals <- project_fields
+    } else {
+      selected_vals <- intersect(p_project_fields, project_fields)
+      if (length(selected_vals) == 0) selected_vals <- project_fields
+    }
+
     checkboxGroupInput(
       "projects_page_details_project_fields_checkboxes",
-      "Fields:", project_fields %>% unlist(use.names = FALSE) %>% sort(),
-      selected = input$projects_page_graph_project_fields_checkboxes
-      # selected=projects_page_graph_project_fields_checkboxes
+      "Fields:", choices = project_fields,
+      selected = selected_vals
     )
   })
 
   output$projects_page_details_researcher_name_output <- renderUI({
-    # textInput("projects_page_details_researcher_name", "Researcher name", p_researchers_name)
-    textInput("projects_page_details_researcher_name", "Researcher name", input$projects_page_graph_selection)
+    # choose initial researcher name value: prefer shared rv -> graph input -> empty
+    text_val <- if (!is.null(rv$selection)) {
+      rv$selection
+    } else if (!is.null(input$projects_page_graph_selection)) {
+      input$projects_page_graph_selection
+    } else {
+      ""
+    }
+    textInput("projects_page_details_researcher_name", "Researcher name", value = text_val)
   })
 
   output$projects_page_graph_selection_output_23 <- renderText({
@@ -50,6 +72,7 @@ server_details_projects_page <- function(input, output) {
   })
 
   df_filtered_for_project_details_stacked_bar_chart <- reactive({
+    req(input$projects_page_details_researcher_name, input$projects_page_details_project_fields_checkboxes)
     df_for_project_details_stacked_bar_chart %>%
       filter(researcher_name == input$projects_page_details_researcher_name) %>%
       filter(project_field %in% input$projects_page_details_project_fields_checkboxes) %>%
@@ -89,6 +112,7 @@ server_details_projects_page <- function(input, output) {
   )
 
   output$projects_page_details_stacked_bar_chart_table_output <- renderTable({
+    req(input$projects_page_details_researcher_name)
     df_researcher_details %>% filter(Name == input$projects_page_details_researcher_name)
   })
 
@@ -98,4 +122,26 @@ server_details_projects_page <- function(input, output) {
     },
     filter = "top"
   )
+
+  # --- push details inputs -> shared rv ---
+  observeEvent(input$projects_page_details_researcher_name, {
+    rv$selection <- input$projects_page_details_researcher_name
+  }, ignoreInit = TRUE)
+
+  observeEvent(input$projects_page_details_project_fields_checkboxes, {
+    rv$fields <- input$projects_page_details_project_fields_checkboxes
+  }, ignoreInit = TRUE)
+
+  # --- react to shared rv -> details inputs (keep UI synced when graph changes) ---
+  observe({
+    # update researcher name text input if needed
+    if (!is.null(rv$selection) && !identical(rv$selection, input$projects_page_details_researcher_name)) {
+      try(updateTextInput(session, "projects_page_details_researcher_name", value = rv$selection), silent = TRUE)
+    }
+    # update fields checkbox group if needed
+    if (!is.null(rv$fields) && !identical(rv$fields, input$projects_page_details_project_fields_checkboxes)) {
+      try(updateCheckboxGroupInput(session, "projects_page_details_project_fields_checkboxes", selected = rv$fields), silent = TRUE)
+    }
+  })
 }
+# ...existing code...

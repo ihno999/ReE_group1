@@ -66,7 +66,8 @@ ui_graph_projects_page <- sidebarLayout(
 )
 
 ### SERVER
-server_graph_projects_page <- function(input, output, session) {
+# server now accepts session and a shared reactiveValues rv
+server_graph_projects_page <- function(input, output, session, rv) {
   # --- Dynamic researcher/company selection ---
   output$projects_page_graph_selection_output <- renderUI({
     req(input$projects_page_graph_type)
@@ -83,7 +84,7 @@ server_graph_projects_page <- function(input, output, session) {
         "projects_page_graph_selection",
         "Select Researcher:",
         choices = choices,
-        selected = if (p_graph_selection %in% choices) p_graph_selection else choices[1]
+        selected = if (!is.null(rv$selection) && rv$selection %in% choices) rv$selection else if (p_graph_selection %in% choices) p_graph_selection else choices[1]
       )
     } else {
       companies <- df_for_project_graph_network %>%
@@ -91,7 +92,12 @@ server_graph_projects_page <- function(input, output, session) {
         unique() %>%
         na.omit() %>%
         sort()
-      selectInput("projects_page_graph_selection", "Select Company:", choices = companies, selected = if (p_graph_selection %in% companies) p_graph_selection else companies[1])
+      selectInput(
+        "projects_page_graph_selection",
+        "Select Company:",
+        choices = companies,
+        selected = if (!is.null(rv$selection) && rv$selection %in% companies) rv$selection else if (p_graph_selection %in% companies) p_graph_selection else companies[1]
+      )
     }
   })
 
@@ -107,7 +113,33 @@ server_graph_projects_page <- function(input, output, session) {
     selected_fields <- intersect(p_graph_project_fields, all_fields)
     if (length(selected_fields) == 0) selected_fields <- all_fields
 
-    checkboxGroupInput("projects_page_graph_project_fields_checkboxes", "Fields:", choices = all_fields, selected = selected_fields)
+    checkboxGroupInput(
+      "projects_page_graph_project_fields_checkboxes",
+      "Fields:",
+      choices = all_fields,
+      selected = if (!is.null(rv$fields)) intersect(rv$fields, all_fields) else selected_fields
+    )
+  })
+
+  # --- keep graph inputs -> shared state ---
+  observeEvent(input$projects_page_graph_selection, {
+    rv$selection <- input$projects_page_graph_selection
+  }, ignoreInit = TRUE)
+
+  observeEvent(input$projects_page_graph_project_fields_checkboxes, {
+    rv$fields <- input$projects_page_graph_project_fields_checkboxes
+  }, ignoreInit = TRUE)
+
+  # --- react to shared state -> graph inputs (keep UI synced when details change) ---
+  observe({
+    # update selection input if rv changed
+    if (!is.null(rv$selection) && !identical(rv$selection, input$projects_page_graph_selection)) {
+      try(updateSelectInput(session, "projects_page_graph_selection", selected = rv$selection), silent = TRUE)
+    }
+    # update fields checkboxes if rv changed
+    if (!is.null(rv$fields) && !identical(rv$fields, input$projects_page_graph_project_fields_checkboxes)) {
+      try(updateCheckboxGroupInput(session, "projects_page_graph_project_fields_checkboxes", selected = rv$fields), silent = TRUE)
+    }
   })
 
   # --- Filter dataset ---
