@@ -13,22 +13,15 @@ ui_details_projects_page <- sidebarLayout(
   mainPanel(
     card(tableOutput("projects_page_details_stacked_bar_chart_table_output")),
     card(plotOutput('projects_page_details_stacked_bar_chart_output'), full_screen=TRUE),
-    # card(div(dataTableOutput("projects_page_details_stacked_bar_chart_df_output"), style = "font-size:80%"), full_screen=TRUE),
-    # card(verbatimTextOutput("projects_page_graph_selection_output_23")),
-    card(
-      h4("Project Details"),
-      div(
-        dataTableOutput("projects_page_graph_network_df_output_2"),
-        style = "font-size:80%"
-      ),
-      full_screen = TRUE
-    )
+    card(div(dataTableOutput("projects_page_details_stacked_bar_chart_df_output"), style = "font-size:80%"), full_screen=TRUE),
+    card(verbatimTextOutput("projects_page_graph_selection_output_23"))
   )
 )
 
 
 ### Server
 server_details_projects_page <- function(input, output) {
+
   output$projects_page_details_project_fields_checkboxes_output <- renderUI({
     project_fields <- distinct(df_for_project_details_stacked_bar_chart, project_field)
     checkboxGroupInput(
@@ -56,7 +49,6 @@ server_details_projects_page <- function(input, output) {
   })
 
   output$projects_page_details_stacked_bar_chart_output <- renderPlot({
-    # ggplot(df_filtered_for_project_details_stacked_bar_chart(), aes(fill=project_field, y=sort_digit, x=fct_reorder(company_name, desc(sort_digit)))) +
     ggplot(df_filtered_for_project_details_stacked_bar_chart(), aes(fill=project_field, y=sort_digit, x=fct_reorder(company_name, desc(sort_digit)))) +
       geom_bar(position="stack", stat="identity", width=0.8) +
       xlab("Company") + ylab("Projects count") +
