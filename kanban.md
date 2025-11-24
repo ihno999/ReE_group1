@@ -1,12 +1,13 @@
 # Kanban
 
 ## TODO
-- Different color based on the budget and participation
+- Different color/line type based on the budget and participation/invlovement type. (Ligth red for those who are not paying, dark red for those who are.)
 - Clicking on node gives more information, like budget and participation
 - Connect company details to graph
 - Nodes are spread in a circle, which is sometimes incorrect
 - Graph details visualizations is misleading
-- 
+- Company contacts table wider and a card (for fullscreen)
+- Add internal contact to each external contact 
 
 ## DOING
 
