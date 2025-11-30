@@ -52,82 +52,83 @@ get_related_collaboration_data <- function(filtered_projects) {
 # ----------------------------
 # NETWORK GRAPH DATA BUILDER
 # ----------------------------
-
-prepare_network_graph_data <- function(filtered_data, view_type = "Researcher", selected_name = NULL) {
-  # Determine whether we should highlight a researcher or company
-  highlight_researcher <- !is.null(selected_name) && view_type == "Researcher"
-  highlight_company <- !is.null(selected_name) && view_type == "Company"
-
-  # ---- Researchers ----
-  researchers <- filtered_data %>%
-    select(id = researcher_id, name = researcher_name) %>%
-    distinct() %>%
-    filter(!is.na(id)) %>%
-    mutate(
-      id = as.character(id),
-      type = "researcher",
-      # If we are highlighting a researcher, do a vectorized comparison.
-      # Otherwise assign the default color/size (no comparison to NULL).
-      color = if (highlight_researcher) {
-        if_else(name == selected_name, "#4CAF50", "#FFC107")
+prepare_network_graph_data <- function(df, graph_type, selected_name = NULL) {
+  # Create nodes for researchers
+  researcher_nodes <- df %>%
+    distinct(researcher_id, researcher_name) %>%
+    filter(!is.na(researcher_id) & !is.na(researcher_name)) %>%
+    transmute(
+      id = as.character(paste0("researcher_", researcher_id)),
+      name = researcher_name,
+      type = "Researcher",
+      group = if (is.null(selected_name) || selected_name == "" || selected_name == "All researchers") {
+        "Other Researcher"
       } else {
-        "#FFC107"
-      },
-      size = if (highlight_researcher) {
-        if_else(name == selected_name, 20, 15)
-      } else {
-        15
+        ifelse(researcher_name == selected_name, "Selected Researcher", "Other Researcher")
       }
     )
-
-  # ---- Projects ----
-  projects <- filtered_data %>%
-    select(id = project_id, name = project_name) %>%
-    distinct() %>%
-    mutate(
-      id = as.character(id),
-      type = "project",
-      color = "#2196F3",
-      size = 12
+  
+  # Create nodes for projects
+  project_nodes <- df %>%
+    distinct(project_id, project_name) %>%
+    filter(!is.na(project_id) & !is.na(project_name)) %>%
+    transmute(
+      id = as.character(paste0("project_", project_id)),
+      name = project_name,
+      type = "Project",
+      group = "Project"
     )
-
-  # ---- Companies ----
-  companies <- filtered_data %>%
-    select(id = company_id, name = company_name) %>%
-    distinct() %>%
-    filter(!is.na(id)) %>%
+  
+  # Create nodes for companies with roles - handle missing roles
+  company_nodes <- df %>%
+    distinct(company_id, company_name, company_role) %>%
+    filter(!is.na(company_id) & !is.na(company_name)) %>%
     mutate(
-      id = as.character(id),
-      type = "company",
-      color = if (highlight_company) {
-        if_else(name == selected_name, "#4CAF50", "#F44336")
-      } else {
-        "#F44336"
-      },
-      size = if (highlight_company) {
-        if_else(name == selected_name, 20, 15)
-      } else {
-        15
-      }
+      # Handle missing roles by defaulting to "Participation"
+      company_role = ifelse(is.na(company_role) | company_role == "", "Participation", company_role),
+      group = case_when(
+        company_role == "Funding" ~ "Funding Company",
+        company_role == "Steering Committee" ~ "Steering Committee Company",
+        company_role == "Participation" ~ "Participating Company",
+        TRUE ~ "Participating Company"  # default case
+      )
+    ) %>%
+    transmute(
+      id = as.character(paste0("company_", company_id)),
+      name = company_name,
+      type = "Company",
+      group = group,
+      role = company_role
     )
-
-  nodes <- bind_rows(researchers, projects, companies)
-
-  # ---- Edges: Researcher → Project ----
-  researcher_project_edges <- filtered_data %>%
-    select(from = researcher_id, to = project_id) %>%
-    distinct() %>%
-    mutate(from = as.character(from), to = as.character(to))
-
-  # ---- Edges: Project → Company ----
-  project_company_edges <- filtered_data %>%
-    filter(!is.na(company_id)) %>%
-    select(from = project_id, to = company_id) %>%
-    distinct() %>%
-    mutate(from = as.character(from), to = as.character(to))
-
-  edges <- bind_rows(researcher_project_edges, project_company_edges)
-
+  
+  # Combine all nodes and ensure unique IDs
+  nodes <- bind_rows(researcher_nodes, project_nodes, company_nodes) %>%
+    filter(!is.na(id) & !is.na(name)) %>%
+    distinct(id, .keep_all = TRUE)
+  
+  # Create edges: researchers to projects
+  edges_res_proj <- df %>%
+    filter(!is.na(researcher_id) & !is.na(project_id)) %>%
+    transmute(
+      from = as.character(paste0("researcher_", researcher_id)),
+      to = as.character(paste0("project_", project_id))
+    ) %>%
+    distinct()
+  
+  # Create edges: companies to projects
+  edges_comp_proj <- df %>%
+    filter(!is.na(company_id) & !is.na(project_id)) %>%
+    transmute(
+      from = as.character(paste0("company_", company_id)),
+      to = as.character(paste0("project_", project_id))
+    ) %>%
+    distinct()
+  
+  # Combine edges
+  edges <- bind_rows(edges_res_proj, edges_comp_proj) %>%
+    filter(!is.na(from) & !is.na(to)) %>%
+    distinct()
+  
   list(nodes = nodes, edges = edges)
 }
 

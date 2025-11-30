@@ -26,7 +26,7 @@ ui_graph_projects_page <- sidebarLayout(
     # --- LEGEND BELOW GRAPH ---
     card(
       div(
-        style = "display: flex; flex-direction: row; gap: 25px; padding: 15px; font-size: 14px; align-items: center;",
+        style = "display: flex; flex-direction: row; flex-wrap: wrap; gap: 15px; padding: 15px; font-size: 12px; align-items: center;",
         # Selected Researcher / Company
         div(
           style = "display:flex; align-items:center;",
@@ -45,11 +45,23 @@ ui_graph_projects_page <- sidebarLayout(
           div(style = "width:14px; height:14px; background:#2196F3; border-radius:50%; margin-right:6px;"),
           "Projects"
         ),
-        # Companies
+        # Companies: Funding Companies
+        div(
+          style = "display:flex; align-items:center;",
+          div(style = "width:14px; height:14px; background:#F77777; border-radius:50%; margin-right:6px;"),
+          "Funding Companies"
+        ),
+        # Companies: Steering Committee
         div(
           style = "display:flex; align-items:center;",
           div(style = "width:14px; height:14px; background:#F44336; border-radius:50%; margin-right:6px;"),
-          "Companies"
+          "Steering Committee"
+        ),
+        # Companies: Participation Companies
+        div(
+          style = "display:flex; align-items:center;",
+          div(style = "width:14px; height:14px; background:#B83027; border-radius:50%; margin-right:6px;"),
+          "Participating Companies"
         )
       )
     ),
@@ -211,7 +223,20 @@ server_graph_projects_page <- function(input, output, session, rv) {
         return(data.frame(Message = "No data for selected node"))
       }
 
-      node %>% select(ID = id, Name = name, Type = type)
+      # For company nodes, show the role
+      if (grepl("^company_", node_id)) {
+        company_id <- as.integer(gsub("^company_", "", node_id))
+        company_data <- df_filtered_for_graph() %>% 
+          filter(company_id == !!company_id) %>%
+          distinct(company_name, company_role)
+        
+        if (nrow(company_data) > 0) {
+          node <- node %>% 
+            mutate(Role = company_data$company_role[1])
+        }
+      }
+
+      node %>% select(ID = id, Name = name, Type = type, Role = group)
     },
     options = list(dom = "t", pageLength = 1)
   )
@@ -219,7 +244,7 @@ server_graph_projects_page <- function(input, output, session, rv) {
   # --- Graph (visNetwork) ---
   output$projects_page_graph_network_output <- renderVisNetwork({
     req(nrow(df_filtered_for_graph()) > 0)
-
+    
     selected_name_for_graph <- if (!is.null(input$projects_page_graph_selection) &&
       input$projects_page_graph_selection == "All researchers" &&
       input$projects_page_graph_type == "Researcher") {
@@ -227,17 +252,63 @@ server_graph_projects_page <- function(input, output, session, rv) {
     } else {
       input$projects_page_graph_selection
     }
-
+    
     graph_data <- prepare_network_graph_data(df_filtered_for_graph(), input$projects_page_graph_type, selected_name_for_graph)
-    nodes <- graph_data$nodes %>% mutate(label = name, title = name)
-    edges <- graph_data$edges %>% mutate(width = 2, color = list(color = "gray"))
-
-    visNetwork(nodes, edges, height = "600px") %>%
+    
+    # Check if we have valid data
+    if (nrow(graph_data$nodes) == 0 || nrow(graph_data$edges) == 0) {
+      return(visNetwork(data.frame(), data.frame()) %>% 
+              visNodes(shadow = TRUE) %>%
+              visEdges(smooth = FALSE) %>%
+              visOptions(highlightNearest = TRUE))
+    }
+    
+    nodes <- graph_data$nodes %>% 
+      mutate(
+        label = name, 
+        title = name,
+        # Ensure IDs are character
+        id = as.character(id)
+      )
+    
+    edges <- graph_data$edges %>% 
+      mutate(
+        width = 2, 
+        color = list(color = "gray"),
+        # Ensure IDs are character
+        from = as.character(from),
+        to = as.character(to)
+      )
+    
+    # Create the network
+    network <- visNetwork(nodes, edges, height = "600px") %>%
       visNodes(shadow = TRUE, borderWidth = 1) %>%
       visEdges(smooth = FALSE) %>%
       visOptions(highlightNearest = TRUE) %>%
       visEvents(select = "function(nodes) { Shiny.setInputValue('projects_page_graph_network_output_selected', nodes); }") %>%
       visPhysics(solver = "forceAtlas2Based", stabilization = TRUE)
+    
+    # Add group styling only if groups exist
+    if ("Selected Researcher" %in% nodes$group) {
+      network <- network %>% visGroups(groupname = "Selected Researcher", color = list(background = "#4CAF50", border = "#388E3C"))
+    }
+    if ("Other Researcher" %in% nodes$group) {
+      network <- network %>% visGroups(groupname = "Other Researcher", color = list(background = "#FFC107", border = "#FFA000"))
+    }
+    if ("Project" %in% nodes$group) {
+      network <- network %>% visGroups(groupname = "Project", color = list(background = "#2196F3", border = "#1976D2"))
+    }
+    if ("Funding Company" %in% nodes$group) {
+      network <- network %>% visGroups(groupname = "Funding Company", color = list(background = "#F77777", border = "#e64d4dff"))
+    }
+    if ("Steering Committee Company" %in% nodes$group) {
+      network <- network %>% visGroups(groupname = "Steering Committee Company", color = list(background = "#F44336", border = "#D32F2F"))
+    }
+    if ("Participating Company" %in% nodes$group) {
+      network <- network %>% visGroups(groupname = "Participating Company", color = list(background = "#B83027", border = "#a3251c"))
+    }
+    
+    network
   })
 
   # --- Project details table ---
