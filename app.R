@@ -12,7 +12,8 @@ options(shiny.autoreload=TRUE)
 server <- function(input, output, session, rv) {
   rv <- reactiveValues(
     selection = if (exists("p_graph_selection")) p_graph_selection else "All researchers",
-    fields = if (exists("p_graph_project_fields")) p_graph_project_fields else c()
+    fields = if (exists("p_graph_project_fields")) p_graph_project_fields else c(),
+    type = if (exists("p_graph_type")) p_graph_type else "Researcher"
   )
 
   server_projects(input, output, session, rv)

@@ -6,12 +6,7 @@ p_graph_project_fields <- c("Circular Economy", "Digital Education", "BioTech", 
 ### UI
 ui_graph_projects_page <- sidebarLayout(
   sidebarPanel(
-    selectInput(
-      "projects_page_graph_type",
-      "Select type:",
-      choices = c("Researcher", "Company"),
-      selected = p_graph_type
-    ),
+    uiOutput("projects_page_graph_type_output"),
     uiOutput("projects_page_graph_selection_output"),
     uiOutput("projects_page_graph_project_fields_checkboxes_output"),
     width = 2
@@ -80,6 +75,16 @@ ui_graph_projects_page <- sidebarLayout(
 ### SERVER
 # server now accepts session and a shared reactiveValues rv
 server_graph_projects_page <- function(input, output, session, rv) {
+  # --- Dynamic type selection ---
+  output$projects_page_graph_type_output <- renderUI({
+    selectInput(
+      "projects_page_graph_type",
+      "Select type:",
+      choices = c("Researcher", "Company"),
+      selected = rv$type
+    )
+  })
+
   # --- Dynamic researcher/company selection ---
   output$projects_page_graph_selection_output <- renderUI({
     req(input$projects_page_graph_type)
