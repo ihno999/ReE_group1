@@ -223,20 +223,12 @@ server_graph_projects_page <- function(input, output, session, rv) {
         return(data.frame(Message = "No data for selected node"))
       }
 
-      # For company nodes, show the role
+      # For company nodes, show all information.
       if (grepl("^company_", node_id)) {
         company_id <- as.integer(gsub("^company_", "", node_id))
-        company_data <- df_filtered_for_graph() %>% 
-          filter(company_id == !!company_id) %>%
-          distinct(company_name, company_role)
-        
-        if (nrow(company_data) > 0) {
-          node <- node %>% 
-            mutate(Role = company_data$company_role[1])
-        }
+        company_data %>% filter(company_id == company_id)
       }
 
-      node %>% select(ID = id, Name = name, Type = type, Role = group)
     },
     options = list(dom = "t", pageLength = 1)
   )
