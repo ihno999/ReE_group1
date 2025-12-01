@@ -223,22 +223,45 @@ server_graph_projects_page <- function(input, output, session, rv) {
         return(data.frame(Message = "No data for selected node"))
       }
 
-      # For company nodes, show the role
-      if (grepl("^company_", node_id)) {
-        company_id <- as.integer(gsub("^company_", "", node_id))
-        company_data <- df_filtered_for_graph() %>% 
-          filter(company_id == !!company_id) %>%
-          distinct(company_name, company_role)
-        
-        if (nrow(company_data) > 0) {
-          node <- node %>% 
-            mutate(Role = company_data$company_role[1])
+      # Node information
+      node_information_table <- NULL
+
+      # Researcher node information.
+      researcher_pattern <- "^researcher_"
+      if (grepl(researcher_pattern, node_id)) {
+        researcher_id <- as.integer(gsub(researcher_pattern, "", node_id))
+        node_information_table <- df_researchers_and_groups %>% filter(employee_id == researcher_id)
+      }
+
+      # Company node informatinon.
+      company_pattern <- "^company_"
+      if (grepl(company_pattern, node_id)) {
+        company_id_s <- as.integer(gsub(company_pattern, "", node_id))
+        node_information_table <- company_data %>% filter(company_id == company_id_s)
+      }
+
+      # Project node infromation.
+      project_pattern <- "^project_"
+      if (grepl(project_pattern, node_id)) {
+        project_id_s <- as.integer(gsub(project_pattern, "", node_id))
+        node_information_table <- projects_data %>% filter(project_id == project_id_s)
+
+        # Hide long description under a button.
+        if("description" %in% colnames(node_information_table)) {
+          node_information_table$description <- sapply(node_information_table$description, function(text) {
+            paste0(
+              '<details><summary>Show</summary><p style="width: 500px">',
+              text,
+              '</p></details>'
+            )
+          })
         }
       }
 
-      node %>% select(ID = id, Name = name, Type = type, Role = group)
+      node_information_table
     },
-    options = list(dom = "t", pageLength = 1)
+    options = list(dom = "t", pageLength = 1),
+    escape = FALSE
   )
 
   # --- Graph (visNetwork) ---
