@@ -9,10 +9,14 @@ options(shiny.autoreload=TRUE)
 
 
 ### Server
-server <- function(input, output) {
-  server_projects(input, output)
-  # server_people(input, output)
-  server_peoples(input, output)
+server <- function(input, output, session, rv) {
+  rv <- reactiveValues(
+    selection = if (exists("p_graph_selection")) p_graph_selection else "All researchers",
+    fields = if (exists("p_graph_project_fields")) p_graph_project_fields else c()
+  )
+
+  server_projects(input, output, session, rv)
+  server_companies(input, output, session, rv)
 
 }
 

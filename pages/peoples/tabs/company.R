@@ -1,16 +1,26 @@
 ui_table_company <- sidebarLayout(
     sidebarPanel(
         h4("Side Panel"),
-        selectInput("select_company", "Select a company:", 
-            choices = c("", unique(company_data$name)))
+        uiOutput("select_input")
     ),
     mainPanel(
         h3("Company Overview"),
-        dataTableOutput("company_table")
+        dataTableOutput("company_table"),
+        verbatimTextOutput("pooop")
     )
 )
 
-server_table_company <- function(input, output, session) {
+server_table_company <- function(input, output, session, rv) {
+  output$pooop <- renderText({
+    rv$selection
+  })
+
+  output$select_input <- renderUI({
+    selectInput("select_company", "Select a company:",
+                choices = c("", unique(company_data$name)),
+                selected = rv$selection)
+  })
+
   # Filter for company data
   joined_company_data <- reactive({
     company_data %>% 

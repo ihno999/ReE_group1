@@ -12,7 +12,7 @@ ui_table_people <- sidebarLayout(
     )
 )
 
-server_table_people <- function(input, output, session) {
+server_table_people <- function(input, output, session, rv) {
     # Filter for people data
     joined_people_data <- reactive({
         researchers_data %>%
@@ -39,9 +39,9 @@ server_table_people <- function(input, output, session) {
         if("description" %in% colnames(df)) {
             df$description <- sapply(df$description, function(text) {
                 paste0(
-                    '<details><summary>Show</summary>',
+                    '<details><summary>Show</summary><p style="width: 500px">',
                     text,
-                    '</details>'
+                    '</p></details>'
                 )
             })
         }
