@@ -43,7 +43,9 @@ duckdb_register(con, "research_participation", research_participation_data)
 duckdb_register(con, "researchers", researchers_data)
 
 # Custom views.
-df_researchers_and_groups <- merge(researchers_data, research_groups_data, by.x = "main_research_group", by.y = "group_id")
+df_researchers_and_groups <-
+    merge(researchers_data, research_groups_data, by.x = "main_research_group", by.y = "group_id") %>%
+    rename("researcher_name" = "name.x", "main_research_group_name" = "name.y")
 
 # df_general_with_project_fields <- dbGetQuery(con, q_df_general)
 df_general <- dbGetQuery(con, q_df_general)

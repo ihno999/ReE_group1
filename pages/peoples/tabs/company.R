@@ -35,9 +35,9 @@ server_table_company <- function(input, output, session) {
     if("description" %in% colnames(df)) {
       df$description <- sapply(df$description, function(text) {
         paste0(
-          '<details><summary>Show</summary>',
+          '<details><summary>Show</summary><p style="width: 500px">',
           text,
-          '</details>'
+          '</p></details>'
         )
       })
     }
