@@ -10,11 +10,11 @@ ui_table_company <- sidebarLayout(
     card(
       h3("Company Overview"),
       div(
-        style = "overflow: visible; height: auto;",
+        style = "overflow-y: visible; overflow-x: visible; height: auto; width: 100%; ",
         dataTableOutput("company_table")
       ),
       full_screen = TRUE,
-      style = "overflow: visible;"
+      style = " overflow-x: visible; overflow-y: visible;"
     )
   )
 )

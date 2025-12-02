@@ -12,11 +12,11 @@ ui_table_people <- sidebarLayout(
         card(
             h3("People Overview"),
             div(
-                style = "overflow: visible; height: auto;",
+                style = "overflow-y: visible; overflow-x: visible; height: auto; width: 100%; ",
                 dataTableOutput("people_table")
             ),
             full_screen = TRUE,
-            style = "overflow: visible;"
+            style = "overflow-x: hidden; overflow-y: visible;"
         )
     )
 )
