@@ -68,6 +68,15 @@ ui_graph_projects_page <- sidebarLayout(
         dataTableOutput("projects_page_graph_node_info_output"),
         style = "font-size:90%"
       )
+    ),
+
+    # --- NODE DETAILS RELATED PROJECTS ---
+    card(
+      h4("Node Information Related Projects"),
+      div(
+        dataTableOutput("projects_page_graph_node_info_related_projects_output"),
+        style = "font-size:90%"
+      )
     )
   )
 )
@@ -266,6 +275,68 @@ server_graph_projects_page <- function(input, output, session, rv) {
       node_information_table
     },
     options = list(dom = "t", pageLength = 1),
+    escape = FALSE
+  )
+
+  # --- Node info table of related projects (click node in graph) ---
+  output$projects_page_graph_node_info_related_projects_output <- renderDataTable(
+  {
+    sel <- input$projects_page_graph_network_output_selected
+    if (is.null(sel) || is.null(sel$nodes) || length(sel$nodes) == 0) {
+      return(data.frame(Message = "Click a node in the graph"))
+    }
+    node_id <- sel$nodes[[1]]
+
+    selected_name_for_graph <- if (!is.null(input$projects_page_graph_selection) &&
+      input$projects_page_graph_selection == "All researchers" &&
+      input$projects_page_graph_type == "Researcher") {
+      NULL
+    } else {
+      input$projects_page_graph_selection
+    }
+
+    sel <- input$projects_page_graph_network_output_selected
+    if (is.null(sel) || is.null(sel$nodes) || length(sel$nodes) == 0) {
+      return(data.frame(Message = "Click a node in the graph"))
+    }
+
+    node_id <- sel$nodes[[1]]
+
+    # Node information
+    node_information_table_related_projects <- NULL
+
+    # Company node informatinon.
+    company_pattern <- "^company_"
+    if (grepl(company_pattern, node_id)) {
+      company_id_s <- as.integer(gsub(company_pattern, "", node_id))
+
+      # Get all information about connected codes.
+      graph_data <- prepare_network_graph_data(df_filtered_for_graph(), input$projects_page_graph_type, selected_name_for_graph)
+      df_connected_nodes <- graph_data$edges %>%
+        filter(from == node_id) %>%
+        rename("company_id" = "from", "connected_project_id" = "to")
+
+      # Extract IDs.
+      df_connected_nodes$company_id <- lapply(df_connected_nodes$company_id, function(id) as.numeric(sub("company_", "", id)))
+      df_connected_nodes$connected_project_id <- lapply(df_connected_nodes$connected_project_id, function(id) as.numeric(sub("project_", "", id)))
+
+      # Add project name.
+      df_connected_nodes$connected_project_name <- "l"
+      get_project_name_by_project_id <- function(id) {
+        project_name <- projects_data %>%
+          select(project_id, name) %>%
+          filter(project_id == id) %>%
+          select(name)
+        return(as.character(project_name))
+      }
+      df_connected_nodes$connected_project_name <- lapply(df_connected_nodes$connected_project_id, get_project_name_by_project_id)
+
+      node_information_table_related_projects <- df_connected_nodes
+    }
+
+    node_information_table_related_projects
+  },
+    options = list(dom = "t"),
     escape = FALSE
   )
 
