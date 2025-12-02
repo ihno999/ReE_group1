@@ -4,11 +4,14 @@ ui_table_company <- sidebarLayout(
     selectInput("select_company", "Select a company:",
       choices = c("", unique(company_data$name))
     ),
-    width = 3
+    width = 2
   ),
   mainPanel(
-    h3("Company Overview"),
-    dataTableOutput("company_table")
+    card(
+      h3("Company Overview"),
+      dataTableOutput("company_table"),
+      full_screen = TRUE
+    )
   )
 )
 

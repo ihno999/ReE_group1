@@ -6,11 +6,14 @@ ui_table_people <- sidebarLayout(
             choices = c("", researchers_data$name)
         ),
         # selectInput("select_name", "Select a name:", researchers_data$name)
-        width = 3
+        width = 2
     ),
     mainPanel(
-        h3("People Overview"),
-        dataTableOutput("people_table")
+        card(
+            h3("People Overview"),
+            dataTableOutput("people_table")
+        ),
+        full_screen = TRUE
     )
 )
 
