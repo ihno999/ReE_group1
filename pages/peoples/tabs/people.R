@@ -11,9 +11,13 @@ ui_table_people <- sidebarLayout(
     mainPanel(
         card(
             h3("People Overview"),
-            dataTableOutput("people_table")
-        ),
-        full_screen = TRUE
+            div(
+                style = "overflow: visible; height: auto;",
+                dataTableOutput("people_table")
+            ),
+            full_screen = TRUE,
+            style = "overflow: visible;"
+        )
     )
 )
 
@@ -51,7 +55,7 @@ server_table_people <- function(input, output, session) {
 
         DT::datatable(
             df,
-            options = list(pageLength = 10, scrollX = TRUE),
+            options = list(pageLength = 10, scrollX = FALSE),
             escape = FALSE
         )
     })

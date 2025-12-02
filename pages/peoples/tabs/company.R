@@ -9,8 +9,12 @@ ui_table_company <- sidebarLayout(
   mainPanel(
     card(
       h3("Company Overview"),
-      dataTableOutput("company_table"),
-      full_screen = TRUE
+      div(
+        style = "overflow: visible; height: auto;",
+        dataTableOutput("company_table")
+      ),
+      full_screen = TRUE,
+      style = "overflow: visible;"
     )
   )
 )
@@ -49,7 +53,7 @@ server_table_company <- function(input, output, session) {
 
     DT::datatable(
       df,
-      options = list(pageLength = 10, scrollX = TRUE),
+      options = list(pageLength = 10, scrollX = FALSE),
       escape = FALSE
     )
   })
