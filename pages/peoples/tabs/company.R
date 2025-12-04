@@ -10,10 +10,19 @@ ui_table_company <- sidebarLayout(
           selected = NULL
         )
     ),
-    mainPanel(
-        h3("Company Overview"),
+    width = 2
+  ),
+  mainPanel(
+    card(
+      h3("Company Overview"),
+      div(
+        style = "overflow-y: visible; overflow-x: visible; height: auto; width: 100%; ",
         dataTableOutput("company_table")
+      ),
+      full_screen = TRUE,
+      style = " overflow-x: visible; overflow-y: visible;"
     )
+  )
 )
 
 server_table_company <- function(input, output, session) {
@@ -77,6 +86,7 @@ server_table_company <- function(input, output, session) {
     data
   })
 
+
   # Render the filtered company table
   output$company_table <- DT::renderDataTable({
     df <- filtered_company_data()
@@ -91,7 +101,7 @@ server_table_company <- function(input, output, session) {
         paste0(
           '<details><summary>Show</summary><p style="width: 500px">',
           text,
-          '</p></details>'
+          "</p></details>"
         )
       })
     }
@@ -130,7 +140,7 @@ server_table_company <- function(input, output, session) {
     
     DT::datatable(
       df,
-      options = list(pageLength = 10, scrollX = TRUE),
+      options = list(pageLength = 10, scrollX = FALSE),
       escape = FALSE
     )
   })
