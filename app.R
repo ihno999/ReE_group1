@@ -19,10 +19,10 @@ options(shiny.autoreload=TRUE)
 
 
 ### Server
-server <- function(input, output) {
+server <- function(input, output, session) {
   server_projects(input, output)
   # server_people(input, output)
-  server_peoples(input, output)
+  server_peoples(input, output, session)
 
 }
 
