@@ -1,9 +1,9 @@
 source("pages/peoples/tabs/people.R")
 source("pages/peoples/tabs/company.R")
 
-server_peoples <- function(input, output) {
-    server_table_people(input, output)
-    server_table_company(input, output)
+server_peoples <- function(input, output, session) {
+    server_table_people(input, output, session)
+    server_table_company(input, output, session)
 }
 
 ui_peoples <- fluidPage(
