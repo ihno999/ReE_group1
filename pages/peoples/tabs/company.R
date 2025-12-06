@@ -9,7 +9,7 @@ ui_table_company <- sidebarLayout(
           choices = NULL,
           selected = NULL
         ),
-    width = 2
+    width = 2.5
     ),
   mainPanel(
     card(
