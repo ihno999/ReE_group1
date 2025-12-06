@@ -8,10 +8,9 @@ ui_table_company <- sidebarLayout(
           "Filter by Project:",
           choices = NULL,
           selected = NULL
-        )
-    ),
+        ),
     width = 2
-  ),
+    ),
   mainPanel(
     card(
       h3("Company Overview"),
