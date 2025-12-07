@@ -2,11 +2,7 @@ library(shiny)
 ui_table_people <- sidebarLayout(
     sidebarPanel(
         h4("Side Panel"),
-        selectInput("select_name", "Select a name:",
-            choices = c("", researchers_data$name)
-        ),
         uiOutput("companies_page_people_tab_select_input"),
-        # selectInput("select_name", "Select a name:", researchers_data$name)
         width = 2
     ),
     mainPanel(
@@ -26,7 +22,9 @@ server_table_people <- function(input, output, session, rv) {
     output$companies_page_people_tab_select_input <- renderUI({
       selectInput("select_name", "Select a name:",
                   choices = c("", researchers_data$name),
-                  selected = rv$selection)
+                  # selected = rv$selection
+                  selected = rv$selected_node_researcher_name
+      )
     })
 
     # Filter for people data

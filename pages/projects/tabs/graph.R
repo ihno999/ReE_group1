@@ -150,6 +150,8 @@ server_graph_projects_page <- function(input, output, session, rv) {
   # --- keep graph inputs -> shared state ---
   observeEvent(input$projects_page_graph_selection, {
     rv$selection <- input$projects_page_graph_selection
+    rv$selected_node_researcher_name <- input$projects_page_graph_selection
+    rv$selected_node_company_name <- input$projects_page_graph_selection
   }, ignoreInit = TRUE)
 
   observeEvent(input$projects_page_graph_project_fields_checkboxes, {

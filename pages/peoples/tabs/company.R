@@ -75,7 +75,7 @@ server_table_company <- function(input, output, session, rv) {
       session = session,
       inputId = "checkbox_projects",
       choices = projects,
-      selected = rv$selected_node_connected_projects
+      selected = if(length(rv$selected_node_connected_projects) == 0) projects else rv$selected_node_connected_projects
       # selected = if(length(projects) > 0) projects else NULL
     )
   })
