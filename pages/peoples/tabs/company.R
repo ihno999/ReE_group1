@@ -2,8 +2,6 @@ ui_table_company <- sidebarLayout(
     sidebarPanel(
         h4("Side Panel"),
         uiOutput("select_input"),
-        selectInput("select_company", "Select a company:", 
-            choices = c("", unique(company_data$name))),
         checkboxGroupInput(
           "checkbox_projects",
           "Filter by Project:",
@@ -34,7 +32,9 @@ server_table_company <- function(input, output, session, rv) {
   output$select_input <- renderUI({
     selectInput("select_company", "Select a company:",
                 choices = c("", unique(company_data$name)),
-                selected = rv$selection)
+                # selected = rv$selection
+                selected = rv$selected_node_company_name
+    )
   })
 
   # Filter for company data
@@ -75,7 +75,8 @@ server_table_company <- function(input, output, session, rv) {
       session = session,
       inputId = "checkbox_projects",
       choices = projects,
-      selected = if(length(projects) > 0) projects else NULL
+      selected = rv$selected_node_connected_projects
+      # selected = if(length(projects) > 0) projects else NULL
     )
   })
 

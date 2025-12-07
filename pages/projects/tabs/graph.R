@@ -245,6 +245,7 @@ server_graph_projects_page <- function(input, output, session, rv) {
       if (grepl(researcher_pattern, node_id)) {
         researcher_id <- as.integer(gsub(researcher_pattern, "", node_id))
         node_information_table <- df_researchers_and_groups %>% filter(employee_id == researcher_id)
+        rv$selected_node_researcher_name <- node_information_table$researcher_name
       }
 
       # Company node informatinon.
@@ -252,6 +253,7 @@ server_graph_projects_page <- function(input, output, session, rv) {
       if (grepl(company_pattern, node_id)) {
         company_id_s <- as.integer(gsub(company_pattern, "", node_id))
         node_information_table <- company_data %>% filter(company_id == company_id_s)
+        rv$selected_node_company_name <- node_information_table$name
       }
 
       # Project node infromation.
@@ -331,19 +333,15 @@ server_graph_projects_page <- function(input, output, session, rv) {
       df_connected_nodes$connected_project_id <- lapply(df_connected_nodes$connected_project_id, function(id) as.numeric(sub("project_", "", id)))
 
       # Add project name.
-      df_connected_nodes$connected_project_name <- "l"
-      get_project_name_by_project_id <- function(id) {
-        project_name <- projects_data %>%
-          select(project_id, name) %>%
-          filter(project_id == id) %>%
-          select(name)
+      df_connected_nodes$connected_project_name <- lapply(df_connected_nodes$connected_project_id, function(id) {
+        project_name <- projects_data %>% select(project_id, name) %>% filter(project_id == id) %>% select(name)
         return(as.character(project_name))
-      }
-      df_connected_nodes$connected_project_name <- lapply(df_connected_nodes$connected_project_id, get_project_name_by_project_id)
+      })
 
       node_information_table_related_projects <- df_connected_nodes
     }
 
+    rv$selected_node_connected_projects <- node_information_table_related_projects$connected_project_name
     node_information_table_related_projects
   },
     options = list(dom = "t"),
