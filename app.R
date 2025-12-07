@@ -29,7 +29,6 @@ ui <- page_navbar(
   inverse = TRUE,
   nav_panel(title = "Researchers", ui_projects),
   nav_panel(title = "Companies", ui_companies)
-
 )
 
 shinyApp(ui = ui, server = server)
