@@ -40,11 +40,11 @@ ui_graph_projects_page <- sidebarLayout(
           div(style = "width:14px; height:14px; background:#2196F3; border-radius:50%; margin-right:6px;"),
           "Projects"
         ),
-        # Companies: Funding Companies
+        # Companies: Participation Companies
         div(
           style = "display:flex; align-items:center;",
           div(style = "width:14px; height:14px; background:#F77777; border-radius:50%; margin-right:6px;"),
-          "Funding Companies"
+          "Participating Companies"
         ),
         # Companies: Steering Committee
         div(
@@ -52,12 +52,12 @@ ui_graph_projects_page <- sidebarLayout(
           div(style = "width:14px; height:14px; background:#F44336; border-radius:50%; margin-right:6px;"),
           "Steering Committee"
         ),
-        # Companies: Participation Companies
+        # Companies: Funding Companies
         div(
           style = "display:flex; align-items:center;",
           div(style = "width:14px; height:14px; background:#B83027; border-radius:50%; margin-right:6px;"),
-          "Participating Companies"
-        )
+          "Funding Companies"
+        ),
       )
     ),
 
@@ -408,13 +408,13 @@ server_graph_projects_page <- function(input, output, session, rv) {
       network <- network %>% visGroups(groupname = "Project", color = list(background = "#2196F3", border = "#1976D2"))
     }
     if ("Funding Company" %in% nodes$group) {
-      network <- network %>% visGroups(groupname = "Funding Company", color = list(background = "#F77777", border = "#e64d4dff"))
+      network <- network %>% visGroups(groupname = "Funding Company", color = list(background = "#B83027", border = "#a3251c"))
     }
     if ("Steering Committee Company" %in% nodes$group) {
       network <- network %>% visGroups(groupname = "Steering Committee Company", color = list(background = "#F44336", border = "#D32F2F"))
     }
     if ("Participating Company" %in% nodes$group) {
-      network <- network %>% visGroups(groupname = "Participating Company", color = list(background = "#B83027", border = "#a3251c"))
+      network <- network %>% visGroups(groupname = "Participating Company", color = list(background = "#F77777", border = "#e64d4dff"))
     }
     
     network
