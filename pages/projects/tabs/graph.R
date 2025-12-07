@@ -319,28 +319,30 @@ server_graph_projects_page <- function(input, output, session, rv) {
       v_node_id <- "researcher_id"
     }
 
-    # Get all information about connected codes.
-    graph_data <- prepare_network_graph_data(df_filtered_for_graph(), input$projects_page_graph_type, selected_name_for_graph)
-    df_connected_nodes <- graph_data$edges %>%
-      filter(from == node_id) %>%
-      rename("{v_node_id}" := "from", "connected_project_id" = "to")
+    if (v_node_pattern != "" && v_node_id != "") {
+      # Get all information about connected codes.
+      graph_data <- prepare_network_graph_data(df_filtered_for_graph(), input$projects_page_graph_type, selected_name_for_graph)
+      df_connected_nodes <- graph_data$edges %>%
+        filter(from == node_id) %>%
+        rename("{v_node_id}" := "from", "connected_project_id" = "to")
 
-    # Extract IDs.
-    df_connected_nodes[v_node_id] <- lapply(df_connected_nodes[v_node_id], function(id) as.numeric(sub(v_node_pattern, "", id)))
-    df_connected_nodes$connected_project_id <- lapply(df_connected_nodes$connected_project_id, function(id) as.numeric(sub("project_", "", id)))
+      # Extract IDs.
+      df_connected_nodes[v_node_id] <- lapply(df_connected_nodes[v_node_id], function(id) as.numeric(sub(v_node_pattern, "", id)))
+      df_connected_nodes$connected_project_id <- lapply(df_connected_nodes$connected_project_id, function(id) as.numeric(sub("project_", "", id)))
 
-    # Add project name.
-    df_connected_nodes$connected_project_name <- "l"
-    get_project_name_by_project_id <- function(id) {
-      project_name <- projects_data %>%
-        select(project_id, name) %>%
-        filter(project_id == id) %>%
-        select(name)
-      return(as.character(project_name))
+      # Add project name.
+      df_connected_nodes$connected_project_name <- "l"
+      get_project_name_by_project_id <- function(id) {
+        project_name <- projects_data %>%
+          select(project_id, name) %>%
+          filter(project_id == id) %>%
+          select(name)
+        return(as.character(project_name))
+      }
+      df_connected_nodes$connected_project_name <- lapply(df_connected_nodes$connected_project_id, get_project_name_by_project_id)
+
+      node_information_table_related_projects <- df_connected_nodes
     }
-    df_connected_nodes$connected_project_name <- lapply(df_connected_nodes$connected_project_id, get_project_name_by_project_id)
-
-    node_information_table_related_projects <- df_connected_nodes
 
     node_information_table_related_projects
   },
