@@ -2,10 +2,7 @@ library(shiny)
 ui_table_people <- sidebarLayout(
     sidebarPanel(
         h4("Side Panel"),
-        selectInput("select_name", "Select a name:",
-            choices = c("", researchers_data$name)
-        ),
-        # selectInput("select_name", "Select a name:", researchers_data$name)
+        uiOutput("companies_page_people_tab_select_input"),
         width = 2
     ),
     mainPanel(
@@ -21,7 +18,15 @@ ui_table_people <- sidebarLayout(
     )
 )
 
-server_table_people <- function(input, output, session) {
+server_table_people <- function(input, output, session, rv) {
+    output$companies_page_people_tab_select_input <- renderUI({
+      selectInput("select_name", "Select a name:",
+                  choices = c("", researchers_data$name),
+                  # selected = rv$selection
+                  selected = rv$selected_node_researcher_name
+      )
+    })
+
     # Filter for people data
     joined_people_data <- reactive({
         researchers_data %>%
@@ -46,9 +51,9 @@ server_table_people <- function(input, output, session) {
         if ("description" %in% colnames(df)) {
             df$description <- sapply(df$description, function(text) {
                 paste0(
-                    "<details><summary>Show</summary>",
+                    '<details><summary>Show</summary><p style="width: 500px">',
                     text,
-                    "</details>"
+                    '</p></details>'
                 )
             })
         }

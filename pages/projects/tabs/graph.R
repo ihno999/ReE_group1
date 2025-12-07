@@ -6,12 +6,7 @@ p_graph_project_fields <- c("Circular Economy", "Digital Education", "BioTech", 
 ### UI
 ui_graph_projects_page <- sidebarLayout(
   sidebarPanel(
-    selectInput(
-      "projects_page_graph_type",
-      "Select type:",
-      choices = c("Researcher", "Company"),
-      selected = p_graph_type
-    ),
+    uiOutput("projects_page_graph_type_output"),
     uiOutput("projects_page_graph_selection_output"),
     uiOutput("projects_page_graph_project_fields_checkboxes_output"),
     width = 2
@@ -73,6 +68,15 @@ ui_graph_projects_page <- sidebarLayout(
         dataTableOutput("projects_page_graph_node_info_output"),
         style = "font-size:90%"
       )
+    ),
+
+    # --- NODE DETAILS RELATED PROJECTS ---
+    card(
+      h4("Node Information Related Projects"),
+      div(
+        dataTableOutput("projects_page_graph_node_info_related_projects_output"),
+        style = "font-size:90%"
+      )
     )
   )
 )
@@ -80,6 +84,16 @@ ui_graph_projects_page <- sidebarLayout(
 ### SERVER
 # server now accepts session and a shared reactiveValues rv
 server_graph_projects_page <- function(input, output, session, rv) {
+  # --- Dynamic type selection ---
+  output$projects_page_graph_type_output <- renderUI({
+    selectInput(
+      "projects_page_graph_type",
+      "Type",
+      choices = c("Researcher", "Company"),
+      selected = rv$type
+    )
+  })
+
   # --- Dynamic researcher/company selection ---
   output$projects_page_graph_selection_output <- renderUI({
     req(input$projects_page_graph_type)
@@ -94,7 +108,7 @@ server_graph_projects_page <- function(input, output, session, rv) {
       choices <- c("All researchers", researchers)
       selectInput(
         "projects_page_graph_selection",
-        "Select Researcher:",
+        "Researcher",
         choices = choices,
         selected = if (!is.null(rv$selection) && rv$selection %in% choices) rv$selection else if (p_graph_selection %in% choices) p_graph_selection else choices[1]
       )
@@ -127,7 +141,7 @@ server_graph_projects_page <- function(input, output, session, rv) {
 
     checkboxGroupInput(
       "projects_page_graph_project_fields_checkboxes",
-      "Fields:",
+      "Project fields",
       choices = all_fields,
       selected = if (!is.null(rv$fields)) intersect(rv$fields, all_fields) else selected_fields
     )
@@ -136,6 +150,8 @@ server_graph_projects_page <- function(input, output, session, rv) {
   # --- keep graph inputs -> shared state ---
   observeEvent(input$projects_page_graph_selection, {
     rv$selection <- input$projects_page_graph_selection
+    rv$selected_node_researcher_name <- input$projects_page_graph_selection
+    rv$selected_node_company_name <- input$projects_page_graph_selection
   }, ignoreInit = TRUE)
 
   observeEvent(input$projects_page_graph_project_fields_checkboxes, {
@@ -231,6 +247,7 @@ server_graph_projects_page <- function(input, output, session, rv) {
       if (grepl(researcher_pattern, node_id)) {
         researcher_id <- as.integer(gsub(researcher_pattern, "", node_id))
         node_information_table <- df_researchers_and_groups %>% filter(employee_id == researcher_id)
+        rv$selected_node_researcher_name <- node_information_table$researcher_name
       }
 
       # Company node informatinon.
@@ -238,6 +255,7 @@ server_graph_projects_page <- function(input, output, session, rv) {
       if (grepl(company_pattern, node_id)) {
         company_id_s <- as.integer(gsub(company_pattern, "", node_id))
         node_information_table <- company_data %>% filter(company_id == company_id_s)
+        rv$selected_node_company_name <- node_information_table$name
       }
 
       # Project node infromation.
@@ -261,6 +279,74 @@ server_graph_projects_page <- function(input, output, session, rv) {
       node_information_table
     },
     options = list(dom = "t", pageLength = 1),
+    escape = FALSE
+  )
+
+  # --- Node info table of related projects (click node in graph) ---
+  output$projects_page_graph_node_info_related_projects_output <- renderDataTable(
+  {
+    sel <- input$projects_page_graph_network_output_selected
+    if (is.null(sel) || is.null(sel$nodes) || length(sel$nodes) == 0) {
+      return(data.frame(Message = "Click a node in the graph"))
+    }
+    node_id <- sel$nodes[[1]]
+
+    selected_name_for_graph <- if (!is.null(input$projects_page_graph_selection) &&
+      input$projects_page_graph_selection == "All researchers" &&
+      input$projects_page_graph_type == "Researcher") {
+      NULL
+    } else {
+      input$projects_page_graph_selection
+    }
+
+    sel <- input$projects_page_graph_network_output_selected
+    if (is.null(sel) || is.null(sel$nodes) || length(sel$nodes) == 0) {
+      return(data.frame(Message = "Click a node in the graph"))
+    }
+
+    node_id <- sel$nodes[[1]]
+
+    # Node information
+    node_information_table_related_projects <- NULL
+
+    # Company node related projects informatinon.
+    v_node_pattern <- ""
+    v_node_id <- ""
+
+    if (grepl("company_", node_id)) {
+      v_node_pattern <-  "company_"
+      v_node_id <- "company_id"
+    }
+
+    if (grepl("researcher_", node_id)) {
+      v_node_pattern <-  "researcher_"
+      v_node_id <- "researcher_id"
+    }
+
+    if (v_node_pattern != "" && v_node_id != "") {
+      # Get all information about connected codes.
+      graph_data <- prepare_network_graph_data(df_filtered_for_graph(), input$projects_page_graph_type, selected_name_for_graph)
+      df_connected_nodes <- graph_data$edges %>%
+        filter(from == node_id) %>%
+        rename("{v_node_id}" := "from", "connected_project_id" = "to")
+
+      # Extract IDs.
+      df_connected_nodes[v_node_id] <- lapply(df_connected_nodes[v_node_id], function(id) as.numeric(sub(v_node_pattern, "", id)))
+      df_connected_nodes$connected_project_id <- lapply(df_connected_nodes$connected_project_id, function(id) as.numeric(sub("project_", "", id)))
+
+      # Add project name.
+      df_connected_nodes$connected_project_name <- lapply(df_connected_nodes$connected_project_id, function(id) {
+        project_name <- projects_data %>% select(project_id, name) %>% filter(project_id == id) %>% select(name)
+        return(as.character(project_name))
+      })
+
+      node_information_table_related_projects <- df_connected_nodes
+    }
+
+    rv$selected_node_connected_projects <- node_information_table_related_projects$connected_project_name
+    node_information_table_related_projects
+  },
+    options = list(dom = "t"),
     escape = FALSE
   )
 

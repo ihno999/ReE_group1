@@ -12,10 +12,7 @@ ui_details_projects_page <- sidebarLayout(
     width = 2
   ),
   mainPanel(
-    card(tableOutput("projects_page_details_stacked_bar_chart_table_output")),
     card(plotOutput("projects_page_details_stacked_bar_chart_output"), full_screen = TRUE),
-    # card(div(dataTableOutput("projects_page_details_stacked_bar_chart_df_output"), style = "font-size:80%"), full_screen=TRUE),
-    # card(verbatimTextOutput("projects_page_graph_selection_output_23")),
     card(
       h4("Project Details"),
       div(
@@ -50,21 +47,18 @@ server_details_projects_page <- function(input, output, session, rv) {
 
     checkboxGroupInput(
       "projects_page_details_project_fields_checkboxes",
-      "Fields:", choices = project_fields,
+      "Project fields", choices = project_fields,
       selected = selected_vals
     )
   })
 
   output$projects_page_details_researcher_name_output <- renderUI({
-    # choose initial researcher name value: prefer shared rv -> graph input -> empty
-    text_val <- if (!is.null(rv$selection)) {
-      rv$selection
-    } else if (!is.null(input$projects_page_graph_selection)) {
-      input$projects_page_graph_selection
-    } else {
-      ""
-    }
-    textInput("projects_page_details_researcher_name", "Researcher name", value = text_val)
+
+    selectInput("projects_page_details_researcher_name", "Researcher  ",
+                choices = c("", researchers_data$name),
+                selected = rv$selection
+                # selected = rv$selected_node_researcher_name
+    )
   })
 
   output$projects_page_graph_selection_output_23 <- renderText({
@@ -94,26 +88,15 @@ server_details_projects_page <- function(input, output, session, rv) {
     ggplot(plot_df, aes(fill = project_field, y = sort_digit, x = fct_reorder(company_name, desc(sort_digit)))) +
       geom_bar(position = "stack", stat = "identity", width = 0.8) +
       xlab("Company") +
-      ylab("Projects count") +
+      ylab("Projects involved") +
       theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
       theme(text = element_text(size = 16)) +
-      ggtitle("Researcher's projects in different companies and fields")
+      ggtitle("Project field distribution across companies for projects related to choosen researcher")
   })
 
   output$projects_page_details_plot_output <- renderPlot({
     ggplot(data = penguins, aes(body_mass_g)) +
       geom_histogram(bins = input$projects_page_details_slider)
-  })
-
-  df_researcher_details <- data.frame(
-    "Name" = df_researchers_and_groups$name.x,
-    "Research Group" = df_researchers_and_groups$name.y,
-    check.names = FALSE
-  )
-
-  output$projects_page_details_stacked_bar_chart_table_output <- renderTable({
-    req(input$projects_page_details_researcher_name)
-    df_researcher_details %>% filter(Name == input$projects_page_details_researcher_name)
   })
 
   output$projects_page_details_stacked_bar_chart_df_output <- renderDataTable(
