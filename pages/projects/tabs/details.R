@@ -47,21 +47,18 @@ server_details_projects_page <- function(input, output, session, rv) {
 
     checkboxGroupInput(
       "projects_page_details_project_fields_checkboxes",
-      "Fields:", choices = project_fields,
+      "Project fields", choices = project_fields,
       selected = selected_vals
     )
   })
 
   output$projects_page_details_researcher_name_output <- renderUI({
-    # choose initial researcher name value: prefer shared rv -> graph input -> empty
-    text_val <- if (!is.null(rv$selection)) {
-      rv$selection
-    } else if (!is.null(input$projects_page_graph_selection)) {
-      input$projects_page_graph_selection
-    } else {
-      ""
-    }
-    textInput("projects_page_details_researcher_name", "Researcher name", value = text_val)
+
+    selectInput("projects_page_details_researcher_name", "Researcher  ",
+                choices = c("", researchers_data$name),
+                selected = rv$selection
+                # selected = rv$selected_node_researcher_name
+    )
   })
 
   output$projects_page_graph_selection_output_23 <- renderText({

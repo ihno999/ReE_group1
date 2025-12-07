@@ -88,7 +88,7 @@ server_graph_projects_page <- function(input, output, session, rv) {
   output$projects_page_graph_type_output <- renderUI({
     selectInput(
       "projects_page_graph_type",
-      "Select type:",
+      "Type",
       choices = c("Researcher", "Company"),
       selected = rv$type
     )
@@ -108,7 +108,7 @@ server_graph_projects_page <- function(input, output, session, rv) {
       choices <- c("All researchers", researchers)
       selectInput(
         "projects_page_graph_selection",
-        "Select Researcher:",
+        "Researcher",
         choices = choices,
         selected = if (!is.null(rv$selection) && rv$selection %in% choices) rv$selection else if (p_graph_selection %in% choices) p_graph_selection else choices[1]
       )
@@ -141,7 +141,7 @@ server_graph_projects_page <- function(input, output, session, rv) {
 
     checkboxGroupInput(
       "projects_page_graph_project_fields_checkboxes",
-      "Fields:",
+      "Project fields",
       choices = all_fields,
       selected = if (!is.null(rv$fields)) intersect(rv$fields, all_fields) else selected_fields
     )
