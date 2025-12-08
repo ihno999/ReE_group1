@@ -433,12 +433,12 @@ server_graph_projects_page <- function(input, output, session, rv) {
             nds$fixed <- FALSE
             nds$physics <- TRUE
 
-            # Place selected at center
+            # Suggested: give it an initial position but let physics move it
             idx_sel <- which(nds$id == selected_id)
-            nds$x[idx_sel] <- 0
-            nds$y[idx_sel] <- 0
-            nds$fixed[idx_sel] <- TRUE
-            nds$physics[idx_sel] <- FALSE
+            nds$x[idx_sel] <- 0 # optional starting point
+            nds$y[idx_sel] <- 0 # optional starting point
+            nds$fixed[idx_sel] <- FALSE # node can move
+            nds$physics[idx_sel] <- TRUE # allow physics simulation
 
             # Identify neighbor nodes directly connected to selected node
             neighbor_edges <- eds %>% filter(from == selected_id | to == selected_id)
@@ -493,7 +493,7 @@ server_graph_projects_page <- function(input, output, session, rv) {
                 arrange(desc(project_count)) %>%
                 pull(non_project)
 
-              inner_radius_base <- 120 # increase from 90 to create more space
+              inner_radius_base <- 400 # increase to create more space between projects nodes and nodes with more connections
               angles_inner <- seq(0, 2 * pi, length.out = n_inner + 1)[-1]
 
               jitter_inner <- 0.05 * inner_radius_base
@@ -556,7 +556,7 @@ server_graph_projects_page <- function(input, output, session, rv) {
             # arc equally spaced across 180° (Option A spacing)
             # Place outer nodes for each hub on a rotated 180° arc facing the center
             # Place outer nodes on 180° arc relative to each hub
-            outer_radius_base <- 250 # increased from 210
+            outer_radius_base <- 400 # increased from 210
             spacing_factor <- 25 # increase spacing for more space between nodes
 
             for (hid in names(outer_assignments)) {
