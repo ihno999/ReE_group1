@@ -493,7 +493,7 @@ server_graph_projects_page <- function(input, output, session, rv) {
                 arrange(desc(project_count)) %>%
                 pull(non_project)
 
-              inner_radius_base <- 400 # increase to create more space between projects nodes and nodes with more connections
+              inner_radius_base <- 600 # increase to create more space between projects nodes and nodes with more connections
               angles_inner <- seq(0, 2 * pi, length.out = n_inner + 1)[-1]
 
               jitter_inner <- 0.05 * inner_radius_base
