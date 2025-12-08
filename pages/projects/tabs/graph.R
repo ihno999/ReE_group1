@@ -402,15 +402,11 @@ server_graph_projects_page <- function(input, output, session, rv) {
     # Behavior:
     #  - If selected_name_for_graph is NULL -> keep the original physics-based layout (All researchers).
     #  - If a specific researcher/company is selected:
-    #      * selected node is fixed at (0,0)
     #      * nodes directly connected to the selected node are split:
     #          - inner ring (hubs): neighbors connected to multiple projects (kept close)
     #          - outer arc (leafs): neighbors connected to only one project (placed on a rotated 180° arc)
     #      * outer nodes are assigned to hubs that share projects with them; if none, they are assigned to the center
-    #      * arcs are **equally spaced across 180°** and rotated so the arc faces the center (Option B)
-    #      * nodes not fixed are left to physics
-    #      * placed/fixed nodes have physics disabled
-    #
+    #      * arcs are **equally spaced across 180°** and rotated so the arc faces the center
     nodes_positions_assigned <- FALSE
 
     # --- IMPORTANT: only run the custom focal layout when a specific selection is active.
