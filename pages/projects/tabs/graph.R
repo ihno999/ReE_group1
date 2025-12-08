@@ -256,7 +256,7 @@ server_graph_projects_page <- function(input, output, session, rv) {
         if ("description" %in% colnames(node_information_table)) {
           node_information_table$description <- sapply(node_information_table$description, function(text) {
             paste0(
-              '<details><summary>Show</summary><p style="width: 500px">',
+              '<details><summary>Show</summary><p/style="width: 500px">',
               text,
               "</p></details>"
             )
@@ -309,13 +309,294 @@ server_graph_projects_page <- function(input, output, session, rv) {
         to = as.character(to)
       )
 
+    # ---- NEW: Per-project circular rings around each project's current position ----
+    # Behavior implemented:
+    #  - Project nodes themselves are not forcibly arranged in a circle.
+    #    Instead we compute sensible positions for project centers using a small layout
+    #    (so centers are relatively well spaced) and then place project-unique nodes
+    #    in perfect circles around those computed project center positions.
+    #  - Nodes connected to multiple projects remain a single node and are left to physics
+    #    (they get no forced x/y coordinates), so they float in neutral space and connect to all projects.
+    #  - Collision avoidance: we scale the project-center layout / ring radii until no ring overlaps.
+    #  - Fixed nodes (project nodes and project-unique ring nodes) have physics disabled so rings remain stable.
+    #  - Other nodes keep physics enabled.
+    #
+    # Implementation notes:
+    #  - We derive project centers using igraph layout on a small project-projection graph,
+    #    then scale / jitter / check overlaps and adjust until rings do not overlap (Option B).
+    #  - The algorithm is conservative and deterministic (seed set).
+    #
+    nodes_positions_assigned <- FALSE
+    try(
+      {
+        nds <- nodes
+        eds <- edges
+
+        # Identify project nodes and non-project nodes
+        project_nodes <- nds %>% filter(group == "Project")
+        non_project_nodes <- nds %>% filter(group != "Project")
+
+        # If there are project nodes and other nodes, proceed; otherwise skip
+        if (nrow(project_nodes) >= 1 && nrow(nds) > 1) {
+          # Build mappings
+          project_ids <- as.character(project_nodes$id)
+          non_project_ids <- as.character(non_project_nodes$id)
+
+          # Edges connecting projects <-> non-projects
+          eds_proj_links <- eds %>%
+            filter((from %in% project_ids & to %in% non_project_ids) | (to %in% project_ids & from %in% non_project_ids)) %>%
+            mutate(
+              project = ifelse(from %in% project_ids, from, to),
+              non_project = ifelse(from %in% non_project_ids, from, to)
+            ) %>%
+            select(project, non_project) %>%
+            distinct()
+
+          # Count how many projects each non-project node is connected to
+          non_proj_project_counts <- eds_proj_links %>%
+            group_by(non_project) %>%
+            summarise(project_count = n(), projects = list(project), .groups = "drop")
+
+          # Unique-to-project nodes (project_count == 1)
+          single_project_nodes <- non_proj_project_counts %>%
+            filter(project_count == 1) %>%
+            pull(non_project)
+
+          # Multi-project nodes (project_count > 1) - will be left unplaced
+          multi_project_nodes <- non_proj_project_counts %>%
+            filter(project_count > 1) %>%
+            pull(non_project)
+
+          # For each project, get its unique nodes (the nodes that are linked only to that project)
+          project_unique_lookup <- eds_proj_links %>%
+            filter(non_project %in% single_project_nodes) %>%
+            group_by(project) %>%
+            summarise(unique_non_projects = list(non_project), .groups = "drop") %>%
+            {
+              setNames(.$unique_non_projects, .$project)
+            }
+
+          # Prepare project center positions via igraph layout on project-projection graph:
+          # Create adjacency between projects by shared multi-project nodes (or by 0 if none)
+          # This helps spread project centers sensibly relative to each other.
+          proj_adj_pairs <- eds_proj_links %>%
+            # produce project-project pairs when a non-project node is connected to multiple projects
+            group_by(non_project) %>%
+            filter(n() > 1) %>%
+            summarise(pp = combn(sort(unique(project)), 2, FUN = function(x) paste(x, collapse = "|"), simplify = TRUE), .groups = "drop") %>%
+            pull(pp)
+
+          # Expand proj_adj_pairs into edges for igraph
+          proj_edges <- data.frame(from = character(), to = character(), stringsAsFactors = FALSE)
+          if (!is.null(proj_adj_pairs) && length(proj_adj_pairs) > 0) {
+            pairs <- unlist(proj_adj_pairs)
+            pairs_split <- strsplit(pairs, "\\|")
+            proj_edges <- do.call(rbind, lapply(pairs_split, function(x) data.frame(from = x[1], to = x[2], stringsAsFactors = FALSE)))
+          }
+
+          # If there are no project-project edges, create a minimal dummy connection to avoid isolated layout degeneracy
+          if (nrow(proj_edges) == 0 && length(project_ids) > 1) {
+            # link consecutive projects in a chain so layout spreads them
+            proj_edges <- data.frame(from = head(project_ids, -1), to = tail(project_ids, -1), stringsAsFactors = FALSE)
+          }
+
+          # Build igraph for project centers
+          library(igraph)
+          if (nrow(proj_edges) > 0) {
+            gproj <- graph_from_data_frame(proj_edges, vertices = project_ids, directed = FALSE)
+          } else {
+            # single project or no project edges
+            gproj <- make_empty_graph(n = length(project_ids))
+            V(gproj)$name <- project_ids
+          }
+
+          # compute a 2D layout for project centers
+          set.seed(123)
+          # Use Fruchterman-Reingold (layout_with_fr) since it tends to space nodes well
+          proj_layout_raw <- layout_with_fr(gproj)
+
+          # Map layout rows to project ids
+          proj_layout_df <- data.frame(project = V(gproj)$name, x = proj_layout_raw[, 1], y = proj_layout_raw[, 2], stringsAsFactors = FALSE)
+
+          # Normalize & scale layout to a base spread
+          if (nrow(proj_layout_df) > 0) {
+            # zero-center and scale
+            proj_layout_df$x <- proj_layout_df$x - mean(proj_layout_df$x)
+            proj_layout_df$y <- proj_layout_df$y - mean(proj_layout_df$y)
+            # scale to desired project center spread scale
+            base_spread <- 300
+            max_range <- max(diff(range(proj_layout_df$x)), diff(range(proj_layout_df$y)))
+            if (max_range == 0) max_range <- 1
+            scale_factor <- base_spread / max_range
+            proj_layout_df$x <- proj_layout_df$x * scale_factor
+            proj_layout_df$y <- proj_layout_df$y * scale_factor
+          } else {
+            proj_layout_df <- data.frame(project = project_ids, x = 0, y = 0, stringsAsFactors = FALSE)
+          }
+
+          # For each project, define ring radius based on number of unique nodes
+          # and a base ring radius for minimal spacing. Also add buffer for label/visuals.
+          ring_radius_base <- 110
+          ring_spacing_per_node <- 18
+          project_radii <- sapply(project_ids, function(pid) {
+            uniques <- project_unique_lookup[[pid]]
+            n_uniques <- if (is.null(uniques)) 0 else length(uniques)
+            # Minimal radius grows with node count
+            ring_radius_base + max(0, (n_uniques - 1)) * ring_spacing_per_node
+          })
+          names(project_radii) <- project_ids
+
+          # Collision avoidance:
+          # If any pair of project centers are too close (center distance < radius_i + radius_j + margin),
+          # increase the overall scale until resolved (iterative scaling).
+          margin_between_rings <- 40
+          scale_attempt <- 1.0
+          max_attempts <- 20
+          attempt <- 1
+          resolved <- FALSE
+          while (attempt <= max_attempts && !resolved) {
+            # compute scaled centers
+            centers <- proj_layout_df
+            centers$x <- centers$x * scale_attempt
+            centers$y <- centers$y * scale_attempt
+
+            # check all pairwise distances
+            if (nrow(centers) <= 1) {
+              resolved <- TRUE
+              break
+            }
+            mat_dist <- as.matrix(dist(centers[, c("x", "y")]))
+            # get project radii matched
+            radii_vec <- project_radii[centers$project]
+            # check overlaps
+            overlap_found <- FALSE
+            for (i in seq_len(nrow(mat_dist))) {
+              for (j in seq_len(nrow(mat_dist))) {
+                if (i >= j) next
+                d <- mat_dist[i, j]
+                ri <- radii_vec[i]
+                rj <- radii_vec[j]
+                if (d < (ri + rj + margin_between_rings)) {
+                  overlap_found <- TRUE
+                  break
+                }
+              }
+              if (overlap_found) break
+            }
+            if (!overlap_found) {
+              resolved <- TRUE
+              break
+            } else {
+              # increase scale and try again
+              scale_attempt <- scale_attempt * 1.25
+              attempt <- attempt + 1
+            }
+          }
+
+          # Final centers after scaling
+          proj_layout_df$x <- proj_layout_df$x * scale_attempt
+          proj_layout_df$y <- proj_layout_df$y * scale_attempt
+
+          # Now assign coordinates:
+          # - projects at proj_layout_df positions
+          # - unique nodes for each project on a circle around the project's center
+          # - multi-project nodes left without coords (NA) -> physics will place them
+          nds$x <- NA_real_
+          nds$y <- NA_real_
+          nds$fixed <- FALSE
+          nds$physics <- TRUE # default; we'll disable for fixed nodes later
+
+          # place project centers
+          for (i in seq_len(nrow(proj_layout_df))) {
+            pid <- proj_layout_df$project[i]
+            cx <- proj_layout_df$x[i]
+            cy <- proj_layout_df$y[i]
+            idx_p <- which(nds$id == pid)
+            if (length(idx_p) == 1) {
+              nds$x[idx_p] <- cx
+              nds$y[idx_p] <- cy
+              nds$fixed[idx_p] <- TRUE
+              nds$physics[idx_p] <- FALSE
+            }
+          }
+
+          # place project-unique nodes on rings
+          for (i in seq_len(nrow(proj_layout_df))) {
+            pid <- proj_layout_df$project[i]
+            cx <- proj_layout_df$x[i]
+            cy <- proj_layout_df$y[i]
+            uniques <- project_unique_lookup[[pid]]
+            if (is.null(uniques) || length(uniques) == 0) next
+            ni <- length(uniques)
+            angles <- seq(0, 2 * pi, length.out = ni + 1)[-1]
+            ring_radius <- project_radii[[pid]]
+            # small jitter to prevent perfect overlap with neighbouring visuals
+            set.seed(200 + i)
+            jitter_amt <- 0.04 * ring_radius
+            for (j in seq_len(ni)) {
+              node_id_j <- uniques[j]
+              idx_n <- which(nds$id == node_id_j)
+              if (length(idx_n) == 1) {
+                nds$x[idx_n] <- cx + (ring_radius + runif(1, -jitter_amt, jitter_amt)) * cos(angles[j])
+                nds$y[idx_n] <- cy + (ring_radius + runif(1, -jitter_amt, jitter_amt)) * sin(angles[j])
+                nds$fixed[idx_n] <- TRUE
+                nds$physics[idx_n] <- FALSE
+              }
+            }
+          }
+
+          # Multi-project nodes stay with NA coords and physics TRUE (they will be placed by vis.js)
+          # For any leftover nodes that still have NA coords (edge cases), place them on a fallback outer ring
+          remaining_idx <- which(is.na(nds$x) | is.na(nds$y))
+          if (length(remaining_idx) > 0) {
+            # We'll keep multi-project nodes floating (physics TRUE, coords NA) so skip setting coords for them.
+            # But if some single nodes were missed (shouldn't happen), provide a gentle fallback around origin.
+            # We'll only assign coords to those with project membership but no assigned coords AND that are single-project.
+            for (ri in remaining_idx) {
+              nid <- nds$id[ri]
+              # only fallback for nodes that are single-project but somehow missed
+              if (nid %in% single_project_nodes) {
+                # find the project it belongs to
+                proj_row <- eds_proj_links %>%
+                  filter(non_project == nid) %>%
+                  pull(project) %>%
+                  unique()
+                if (length(proj_row) >= 1) {
+                  pid <- proj_row[1]
+                  cx <- proj_layout_df$x[proj_layout_df$project == pid]
+                  cy <- proj_layout_df$y[proj_layout_df$project == pid]
+                  ring_radius <- project_radii[[pid]]
+                  angle <- runif(1, 0, 2 * pi)
+                  nds$x[ri] <- cx + ring_radius * cos(angle)
+                  nds$y[ri] <- cy + ring_radius * sin(angle)
+                  nds$fixed[ri] <- TRUE
+                  nds$physics[ri] <- FALSE
+                }
+              }
+            }
+          }
+
+          # Transfer coordinates back to nodes
+          nodes <- nds
+          nodes_positions_assigned <- TRUE
+        }
+      },
+      silent = TRUE
+    )
+
     # Create the network
+    # Note: visNetwork will respect per-node 'physics' boolean and 'fixed' attributes.
+    # We enable physics globally so multi-project nodes and other unfixed nodes can still move,
+    # while nodes with physics = FALSE remain fixed in their assigned positions.
     network <- visNetwork(nodes, edges, height = "600px") %>%
       visNodes(shadow = TRUE, borderWidth = 1) %>%
       visEdges(smooth = FALSE) %>%
       visOptions(highlightNearest = TRUE) %>%
-      visEvents(select = "function(nodes) { Shiny.setInputValue('projects_page_graph_network_output_selected', nodes); }") %>%
-      visPhysics(solver = "forceAtlas2Based", stabilization = TRUE)
+      visEvents(select = "function(nodes) { Shiny.setInputValue('projects_page_graph_network_output_selected', nodes); }")
+
+    # If we assigned positions to nodes, keep physics enabled globally but per-node physics flags control motion.
+    # This way: assigned nodes (physics = FALSE) stay fixed; unassigned nodes (physics = TRUE) move.
+    network <- network %>% visPhysics(enabled = TRUE, solver = "forceAtlas2Based", stabilization = TRUE)
 
     # Add group styling only if groups exist
     if ("Selected Researcher" %in% nodes$group) {
