@@ -134,13 +134,19 @@ server_graph_projects_page <- function(input, output, session, rv) {
   })
 
   # --- keep graph inputs -> shared state ---
-  observeEvent(input$projects_page_graph_selection, {
-    rv$selection <- input$projects_page_graph_selection
-  }, ignoreInit = TRUE)
+  observeEvent(input$projects_page_graph_selection,
+    {
+      rv$selection <- input$projects_page_graph_selection
+    },
+    ignoreInit = TRUE
+  )
 
-  observeEvent(input$projects_page_graph_project_fields_checkboxes, {
-    rv$fields <- input$projects_page_graph_project_fields_checkboxes
-  }, ignoreInit = TRUE)
+  observeEvent(input$projects_page_graph_project_fields_checkboxes,
+    {
+      rv$fields <- input$projects_page_graph_project_fields_checkboxes
+    },
+    ignoreInit = TRUE
+  )
 
   # --- react to shared state -> graph inputs (keep UI synced when details change) ---
   observe({
@@ -247,12 +253,12 @@ server_graph_projects_page <- function(input, output, session, rv) {
         node_information_table <- projects_data %>% filter(project_id == project_id_s)
 
         # Hide long description under a button.
-        if("description" %in% colnames(node_information_table)) {
+        if ("description" %in% colnames(node_information_table)) {
           node_information_table$description <- sapply(node_information_table$description, function(text) {
             paste0(
               '<details><summary>Show</summary><p style="width: 500px">',
               text,
-              '</p></details>'
+              "</p></details>"
             )
           })
         }
@@ -267,7 +273,7 @@ server_graph_projects_page <- function(input, output, session, rv) {
   # --- Graph (visNetwork) ---
   output$projects_page_graph_network_output <- renderVisNetwork({
     req(nrow(df_filtered_for_graph()) > 0)
-    
+
     selected_name_for_graph <- if (!is.null(input$projects_page_graph_selection) &&
       input$projects_page_graph_selection == "All researchers" &&
       input$projects_page_graph_type == "Researcher") {
@@ -275,34 +281,34 @@ server_graph_projects_page <- function(input, output, session, rv) {
     } else {
       input$projects_page_graph_selection
     }
-    
+
     graph_data <- prepare_network_graph_data(df_filtered_for_graph(), input$projects_page_graph_type, selected_name_for_graph)
-    
+
     # Check if we have valid data
     if (nrow(graph_data$nodes) == 0 || nrow(graph_data$edges) == 0) {
-      return(visNetwork(data.frame(), data.frame()) %>% 
-              visNodes(shadow = TRUE) %>%
-              visEdges(smooth = FALSE) %>%
-              visOptions(highlightNearest = TRUE))
+      return(visNetwork(data.frame(), data.frame()) %>%
+        visNodes(shadow = TRUE) %>%
+        visEdges(smooth = FALSE) %>%
+        visOptions(highlightNearest = TRUE))
     }
-    
-    nodes <- graph_data$nodes %>% 
+
+    nodes <- graph_data$nodes %>%
       mutate(
-        label = name, 
+        label = name,
         title = name,
         # Ensure IDs are character
         id = as.character(id)
       )
-    
-    edges <- graph_data$edges %>% 
+
+    edges <- graph_data$edges %>%
       mutate(
-        width = 2, 
+        width = 2,
         color = list(color = "gray"),
         # Ensure IDs are character
         from = as.character(from),
         to = as.character(to)
       )
-    
+
     # Create the network
     network <- visNetwork(nodes, edges, height = "600px") %>%
       visNodes(shadow = TRUE, borderWidth = 1) %>%
@@ -310,7 +316,7 @@ server_graph_projects_page <- function(input, output, session, rv) {
       visOptions(highlightNearest = TRUE) %>%
       visEvents(select = "function(nodes) { Shiny.setInputValue('projects_page_graph_network_output_selected', nodes); }") %>%
       visPhysics(solver = "forceAtlas2Based", stabilization = TRUE)
-    
+
     # Add group styling only if groups exist
     if ("Selected Researcher" %in% nodes$group) {
       network <- network %>% visGroups(groupname = "Selected Researcher", color = list(background = "#4CAF50", border = "#388E3C"))
@@ -330,7 +336,7 @@ server_graph_projects_page <- function(input, output, session, rv) {
     if ("Participating Company" %in% nodes$group) {
       network <- network %>% visGroups(groupname = "Participating Company", color = list(background = "#B83027", border = "#a3251c"))
     }
-    
+
     network
   })
 
