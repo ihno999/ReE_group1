@@ -247,3 +247,52 @@ LEFT JOIN df_projects_and_fields pf USING (project_id);
 
 SELECT * FROM df_for_project_graph_network;
 )"
+
+
+q_people_full_join <- "
+SELECT
+    -- Researcher fields
+    r.employee_id AS employee_id,
+    r.name AS name_x,
+    r.main_research_group,
+
+    -- Project fields
+    p.project_id,
+    p.name AS project_name,
+    p.description AS project_description,
+    p.responsible_group,
+    p.responsible_employee,
+    p.total_budget,
+    p.funding_source,
+    p.type AS project_type,
+    p.start_date,
+    p.end_date,
+
+    -- Project board / Contact link
+    pb.contact_id,
+
+    -- Company fields
+    c.company_id,
+    c.name AS company_name,
+    c.sectors AS company_sectors,
+    c.description AS company_description,
+    c.size AS company_size
+
+FROM researchers r
+LEFT JOIN projects p
+    ON r.employee_id = p.responsible_employee
+
+LEFT JOIN project_board pb
+    ON p.project_id = pb.project_id
+
+LEFT JOIN company_contacts cc
+    ON pb.contact_id = cc.contact_id
+
+LEFT JOIN companies c
+    ON cc.company_id = c.company_id
+
+ORDER BY
+    name_x,
+    project_name,
+    company_name;
+"

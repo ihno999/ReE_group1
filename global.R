@@ -54,3 +54,6 @@ df_for_project_details_stacked_bar_chart <- dbGetQuery(con, q_df_for_project_det
 
 # bq1_a1_data
 df_for_project_graph_network <- dbGetQuery(con, q_df_for_project_graph_network)
+
+# data peoples tab
+people_full_data <- dbGetQuery(con, q_people_full_join)
