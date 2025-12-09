@@ -20,11 +20,14 @@ ui_table_company <- sidebarLayout(
       full_screen = TRUE,
       style = " overflow-x: visible; overflow-y: visible;"
     ),
+    textOutput("email_note"),
     verbatimTextOutput("pooop")
   )
 )
 
 server_table_company <- function(input, output, session, rv) {
+  output$email_note <- renderText({"Note: Emails do not correspond to contact names the way we assume they should. This is due to mocking of data."})
+
   output$pooop <- renderText({
     rv$selection
   })
@@ -148,7 +151,9 @@ server_table_company <- function(input, output, session, rv) {
 
     # Remove columns that exist in the dataframe
     existing_columns_to_hide <- columns_to_hide[columns_to_hide %in% colnames(df)]
-    df <- df[, !colnames(df) %in% existing_columns_to_hide, drop = FALSE]
+    df <- df[, !colnames(df) %in% existing_columns_to_hide, drop = FALSE] %>% na.omit() %>%
+      select(project_name, type, researcher_name, contact_name, department, job_title, email, phone, role) %>%
+      rename(ext_contact_name = contact_name, ext_department = department, ext_job_title = job_title, ext_email = email, ext_phone = phone, ext_role = role, int_contact_name = researcher_name)
 
     DT::datatable(
       df,

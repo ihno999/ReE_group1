@@ -33,7 +33,8 @@ server_table_people <- function(input, output, session, rv) {
     # Filter for people data
     joined_people_data <- reactive({
         researchers_data %>%
-            inner_join(projects_data, by = c("employee_id" = "responsible_employee")) %>%
+            inner_join(research_participation_data, by = c("employee_id" = "researcher_id")) %>%
+            inner_join(projects_data, by = "project_id") %>%
             inner_join(project_board_data, by = "project_id") %>%
             inner_join(company_contacts_data, by = "contact_id") %>%
             inner_join(company_data, by = "company_id")
@@ -66,7 +67,7 @@ server_table_people <- function(input, output, session, rv) {
     output$companies_page_people_tab_select_input <- renderUI({
         data <- joined_people_data()
         selectInput("select_name", "Select a researcher:",
-                    choices = c("", data$name.x),
+                    choices = c("", data$name.x %>% sort()),
                     selected = rv$selected_node_researcher_name
         )
     })
@@ -126,6 +127,8 @@ server_table_people <- function(input, output, session, rv) {
             "main_research_group",
             "project_id",
             "responsible_group",
+            "responsible_employee",
+            "days_allocated",
             "start_date",
             "end_date",
             "contact_id",
