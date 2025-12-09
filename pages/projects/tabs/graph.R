@@ -280,6 +280,20 @@ server_graph_projects_page <- function(input, output, session, rv) {
             )
           })
         }
+
+        # Add responsible group name.
+        node_information_table$responsible_group_name <- lapply(node_information_table$responsible_group, function(id) {
+          responsible_group_namee <- research_groups_data %>% filter(group_id == id) %>% select(name)
+          return(as.character(responsible_group_namee))
+        })
+
+        # Add responsible employee name.
+        node_information_table$responsible_employee_name <- lapply(node_information_table$responsible_employee, function(id) {
+          responsible_employee_namee <- researchers_data %>% filter(employee_id == id) %>% select(name)
+          return(as.character(responsible_employee_namee))
+        })
+
+        node_information_table <- node_information_table %>% select(name, description, responsible_employee_name, responsible_group_name, total_budget, funding_source, type, start_date, end_date)
       }
 
       node_information_table
