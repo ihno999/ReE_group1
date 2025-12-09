@@ -225,7 +225,8 @@ company_links AS (
     c.company_id,
     c.name AS company_name,
     p.project_id,
-    p.name AS project_name
+    p.name AS project_name,
+    pb.role AS company_role
   FROM project_board pb
   JOIN company_contacts cc ON pb.contact_id = cc.contact_id
   JOIN companies c ON cc.company_id = c.company_id
@@ -238,7 +239,8 @@ SELECT
   rl.researcher_id,
   rl.researcher_name,
   cl.company_id,
-  cl.company_name
+  cl.company_name,
+  cl.company_role
 FROM researcher_links rl
 LEFT JOIN company_links cl USING (project_id)
 LEFT JOIN df_projects_and_fields pf USING (project_id);

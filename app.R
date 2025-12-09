@@ -1,16 +1,6 @@
-# source("./ui.R")
-# source("./server.R")
-#
-# options(shiny.port=8080)
-# options(shiny.launch.browser=FALSE)
-#
-# shinyApp(ui = ui, server = server)
-
 source("./global.R")
-
 source("pages/projects/projects.R", local=TRUE)
-# source("pages/people/people.R", local=TRUE)
-source("pages/peoples/peoples.R", local=TRUE)
+source("pages/peoples/companies.R", local=TRUE)
 
 ### Configuration
 options(shiny.port=8080)
@@ -19,10 +9,15 @@ options(shiny.autoreload=TRUE)
 
 
 ### Server
-server <- function(input, output) {
-  server_projects(input, output)
-  # server_people(input, output)
-  server_peoples(input, output)
+server <- function(input, output, session, rv) {
+  rv <- reactiveValues(
+    selection = if (exists("p_graph_selection")) p_graph_selection else "All researchers",
+    fields = if (exists("p_graph_project_fields")) p_graph_project_fields else c(),
+    type = if (exists("p_graph_type")) p_graph_type else "Researcher"
+  )
+
+  server_projects(input, output, session, rv)
+  server_companies(input, output, session, rv)
 
 }
 
@@ -33,9 +28,7 @@ ui <- page_navbar(
   bg = "#2D89C8",
   inverse = TRUE,
   nav_panel(title = "Researchers", ui_projects),
-  # nav_panel(title = "People", ui_people),
-  nav_panel(title = "Companies", ui_peoples)
-
+  nav_panel(title = "Companies", ui_companies)
 )
 
 shinyApp(ui = ui, server = server)
