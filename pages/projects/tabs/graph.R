@@ -148,15 +148,21 @@ server_graph_projects_page <- function(input, output, session, rv) {
   })
 
   # --- keep graph inputs -> shared state ---
-  observeEvent(input$projects_page_graph_selection, {
-    rv$selection <- input$projects_page_graph_selection
-    rv$selected_node_researcher_name <- input$projects_page_graph_selection
-    rv$selected_node_company_name <- input$projects_page_graph_selection
-  }, ignoreInit = TRUE)
+  observeEvent(input$projects_page_graph_selection,
+    {
+      rv$selection <- input$projects_page_graph_selection
+      rv$selected_node_researcher_name <- input$projects_page_graph_selection
+      rv$selected_node_company_name <- input$projects_page_graph_selection
+    },
+    ignoreInit = TRUE
+  )
 
-  observeEvent(input$projects_page_graph_project_fields_checkboxes, {
-    rv$fields <- input$projects_page_graph_project_fields_checkboxes
-  }, ignoreInit = TRUE)
+  observeEvent(input$projects_page_graph_project_fields_checkboxes,
+    {
+      rv$fields <- input$projects_page_graph_project_fields_checkboxes
+    },
+    ignoreInit = TRUE
+  )
 
   # --- react to shared state -> graph inputs (keep UI synced when details change) ---
   observe({
@@ -265,12 +271,12 @@ server_graph_projects_page <- function(input, output, session, rv) {
         node_information_table <- projects_data %>% filter(project_id == project_id_s)
 
         # Hide long description under a button.
-        if("description" %in% colnames(node_information_table)) {
+        if ("description" %in% colnames(node_information_table)) {
           node_information_table$description <- sapply(node_information_table$description, function(text) {
             paste0(
-              '<details><summary>Show</summary><p style="width: 500px">',
+              '<details><summary>Show</summary><p/style="width: 500px">',
               text,
-              '</p></details>'
+              "</p></details>"
             )
           })
         }
@@ -284,68 +290,71 @@ server_graph_projects_page <- function(input, output, session, rv) {
 
   # --- Node info table of related projects (click node in graph) ---
   output$projects_page_graph_node_info_related_projects_output <- renderDataTable(
-  {
-    sel <- input$projects_page_graph_network_output_selected
-    if (is.null(sel) || is.null(sel$nodes) || length(sel$nodes) == 0) {
-      return(data.frame(Message = "Click a node in the graph"))
-    }
-    node_id <- sel$nodes[[1]]
+    {
+      sel <- input$projects_page_graph_network_output_selected
+      if (is.null(sel) || is.null(sel$nodes) || length(sel$nodes) == 0) {
+        return(data.frame(Message = "Click a node in the graph"))
+      }
+      node_id <- sel$nodes[[1]]
 
-    selected_name_for_graph <- if (!is.null(input$projects_page_graph_selection) &&
-      input$projects_page_graph_selection == "All researchers" &&
-      input$projects_page_graph_type == "Researcher") {
-      NULL
-    } else {
-      input$projects_page_graph_selection
-    }
+      selected_name_for_graph <- if (!is.null(input$projects_page_graph_selection) &&
+        input$projects_page_graph_selection == "All researchers" &&
+        input$projects_page_graph_type == "Researcher") {
+        NULL
+      } else {
+        input$projects_page_graph_selection
+      }
 
-    sel <- input$projects_page_graph_network_output_selected
-    if (is.null(sel) || is.null(sel$nodes) || length(sel$nodes) == 0) {
-      return(data.frame(Message = "Click a node in the graph"))
-    }
+      sel <- input$projects_page_graph_network_output_selected
+      if (is.null(sel) || is.null(sel$nodes) || length(sel$nodes) == 0) {
+        return(data.frame(Message = "Click a node in the graph"))
+      }
 
-    node_id <- sel$nodes[[1]]
+      node_id <- sel$nodes[[1]]
 
-    # Node information
-    node_information_table_related_projects <- NULL
+      # Node information
+      node_information_table_related_projects <- NULL
 
-    # Company node related projects informatinon.
-    v_node_pattern <- ""
-    v_node_id <- ""
+      # Company node related projects informatinon.
+      v_node_pattern <- ""
+      v_node_id <- ""
 
-    if (grepl("company_", node_id)) {
-      v_node_pattern <-  "company_"
-      v_node_id <- "company_id"
-    }
+      if (grepl("company_", node_id)) {
+        v_node_pattern <- "company_"
+        v_node_id <- "company_id"
+      }
 
-    if (grepl("researcher_", node_id)) {
-      v_node_pattern <-  "researcher_"
-      v_node_id <- "researcher_id"
-    }
+      if (grepl("researcher_", node_id)) {
+        v_node_pattern <- "researcher_"
+        v_node_id <- "researcher_id"
+      }
 
-    if (v_node_pattern != "" && v_node_id != "") {
-      # Get all information about connected codes.
-      graph_data <- prepare_network_graph_data(df_filtered_for_graph(), input$projects_page_graph_type, selected_name_for_graph)
-      df_connected_nodes <- graph_data$edges %>%
-        filter(from == node_id) %>%
-        rename("{v_node_id}" := "from", "connected_project_id" = "to")
+      if (v_node_pattern != "" && v_node_id != "") {
+        # Get all information about connected codes.
+        graph_data <- prepare_network_graph_data(df_filtered_for_graph(), input$projects_page_graph_type, selected_name_for_graph)
+        df_connected_nodes <- graph_data$edges %>%
+          filter(from == node_id) %>%
+          rename("{v_node_id}" := "from", "connected_project_id" = "to")
 
-      # Extract IDs.
-      df_connected_nodes[v_node_id] <- lapply(df_connected_nodes[v_node_id], function(id) as.numeric(sub(v_node_pattern, "", id)))
-      df_connected_nodes$connected_project_id <- lapply(df_connected_nodes$connected_project_id, function(id) as.numeric(sub("project_", "", id)))
+        # Extract IDs.
+        df_connected_nodes[v_node_id] <- lapply(df_connected_nodes[v_node_id], function(id) as.numeric(sub(v_node_pattern, "", id)))
+        df_connected_nodes$connected_project_id <- lapply(df_connected_nodes$connected_project_id, function(id) as.numeric(sub("project_", "", id)))
 
-      # Add project name.
-      df_connected_nodes$connected_project_name <- lapply(df_connected_nodes$connected_project_id, function(id) {
-        project_name <- projects_data %>% select(project_id, name) %>% filter(project_id == id) %>% select(name)
-        return(as.character(project_name))
-      })
+        # Add project name.
+        df_connected_nodes$connected_project_name <- lapply(df_connected_nodes$connected_project_id, function(id) {
+          project_name <- projects_data %>%
+            select(project_id, name) %>%
+            filter(project_id == id) %>%
+            select(name)
+          return(as.character(project_name))
+        })
 
-      node_information_table_related_projects <- df_connected_nodes
-    }
+        node_information_table_related_projects <- df_connected_nodes
+      }
 
-    rv$selected_node_connected_projects <- node_information_table_related_projects$connected_project_name
-    node_information_table_related_projects
-  },
+      rv$selected_node_connected_projects <- node_information_table_related_projects$connected_project_name
+      node_information_table_related_projects
+    },
     options = list(dom = "t"),
     escape = FALSE
   )
@@ -353,7 +362,7 @@ server_graph_projects_page <- function(input, output, session, rv) {
   # --- Graph (visNetwork) ---
   output$projects_page_graph_network_output <- renderVisNetwork({
     req(nrow(df_filtered_for_graph()) > 0)
-    
+
     selected_name_for_graph <- if (!is.null(input$projects_page_graph_selection) &&
       input$projects_page_graph_selection == "All researchers" &&
       input$projects_page_graph_type == "Researcher") {
@@ -361,42 +370,262 @@ server_graph_projects_page <- function(input, output, session, rv) {
     } else {
       input$projects_page_graph_selection
     }
-    
+
     graph_data <- prepare_network_graph_data(df_filtered_for_graph(), input$projects_page_graph_type, selected_name_for_graph)
-    
+
     # Check if we have valid data
     if (nrow(graph_data$nodes) == 0 || nrow(graph_data$edges) == 0) {
-      return(visNetwork(data.frame(), data.frame()) %>% 
-              visNodes(shadow = TRUE) %>%
-              visEdges(smooth = FALSE) %>%
-              visOptions(highlightNearest = TRUE))
+      return(visNetwork(data.frame(), data.frame()) %>%
+        visNodes(shadow = TRUE) %>%
+        visEdges(smooth = FALSE) %>%
+        visOptions(highlightNearest = TRUE))
     }
-    
-    nodes <- graph_data$nodes %>% 
+
+    nodes <- graph_data$nodes %>%
       mutate(
-        label = name, 
+        label = name,
         title = name,
         # Ensure IDs are character
         id = as.character(id)
       )
-    
-    edges <- graph_data$edges %>% 
+
+    edges <- graph_data$edges %>%
       mutate(
-        width = 2, 
+        width = 2,
         color = list(color = "gray"),
         # Ensure IDs are character
         from = as.character(from),
         to = as.character(to)
       )
-    
+
+    # ---- NEW: Focal radial layout when a specific researcher/company is selected ----
+    # Behavior:
+    #  - If selected_name_for_graph is NULL -> keep the original physics-based layout (All researchers).
+    #  - If a specific researcher/company is selected:
+    #      * nodes directly connected to the selected node are split:
+    #          - inner ring (hubs): neighbors connected to multiple projects (kept close)
+    #          - outer arc (leafs): neighbors connected to only one project (placed on a rotated 180° arc)
+    #      * outer nodes are assigned to hubs that share projects with them; if none, they are assigned to the center
+    #      * arcs are **equally spaced across 180°** and rotated so the arc faces the center
+    nodes_positions_assigned <- FALSE
+
+    # --- IMPORTANT: only run the custom focal layout when a specific selection is active.
+    # If "All researchers" is selected (selected_name_for_graph == NULL for researcher mode),
+    # we skip the custom layout entirely and keep the original physics-based layout.
+    if (!is.null(selected_name_for_graph)) {
+      try(
+        {
+          nds <- nodes
+          eds <- edges
+
+          # find selected node id by name (could be researcher or company)
+          sel_row <- nds %>% filter(name == selected_name_for_graph)
+          if (nrow(sel_row) >= 1) {
+            selected_id <- as.character(sel_row$id[1])
+
+            # Initialize coords / physics
+            nds$x <- NA_real_
+            nds$y <- NA_real_
+            nds$fixed <- FALSE
+            nds$physics <- TRUE
+
+            # Suggested: give it an initial position but let physics move it
+            idx_sel <- which(nds$id == selected_id)
+            nds$x[idx_sel] <- 0 # optional starting point
+            nds$y[idx_sel] <- 0 # optional starting point
+            nds$fixed[idx_sel] <- FALSE # node can move
+            nds$physics[idx_sel] <- TRUE # allow physics simulation
+
+            # Identify neighbor nodes directly connected to selected node
+            neighbor_edges <- eds %>% filter(from == selected_id | to == selected_id)
+            neighbor_ids <- unique(c(
+              neighbor_edges %>% filter(from == selected_id) %>% pull(to),
+              neighbor_edges %>% filter(to == selected_id) %>% pull(from)
+            ))
+            neighbor_ids <- neighbor_ids[neighbor_ids != selected_id]
+
+            # Identify project nodes and mapping of non-project -> project connections
+            project_nodes <- nds %>% filter(group == "Project")
+            project_ids <- as.character(project_nodes$id)
+            non_project_nodes <- nds %>% filter(group != "Project")
+            non_project_ids <- as.character(non_project_nodes$id)
+
+            # Build eds_proj_links: pairs (project, non_project)
+            eds_proj_links <- eds %>%
+              filter((from %in% project_ids & to %in% non_project_ids) | (to %in% project_ids & from %in% non_project_ids)) %>%
+              mutate(
+                project = ifelse(from %in% project_ids, from, to),
+                non_project = ifelse(from %in% non_project_ids, from, to)
+              ) %>%
+              select(project, non_project) %>%
+              distinct()
+
+            # Count how many distinct projects each non-project node is connected to
+            non_proj_project_counts <- eds_proj_links %>%
+              group_by(non_project) %>%
+              summarise(project_count = n_distinct(project), projects = list(unique(project)), .groups = "drop")
+
+            # For neighbors: split into inner (project_count > 1) and outer (project_count == 1)
+            neighbor_project_info <- non_proj_project_counts %>% filter(non_project %in% neighbor_ids)
+
+            inner_neighbors <- neighbor_project_info %>%
+              filter(project_count > 1) %>%
+              pull(non_project)
+            outer_neighbors <- neighbor_project_info %>%
+              filter(project_count == 1) %>%
+              pull(non_project)
+
+            # Ensure inner/outer are valid non-project ids (exclude project nodes)
+            inner_neighbors <- inner_neighbors[inner_neighbors %in% non_project_ids]
+            outer_neighbors <- outer_neighbors[outer_neighbors %in% non_project_ids]
+
+            # Place inner neighbors (hubs) on a small full circle around the center
+            # Place inner neighbors (hubs) on a full circle around the center
+            n_inner <- length(inner_neighbors)
+            if (n_inner > 0) {
+              # Order inner neighbors by number of connected projects (descending)
+              inner_neighbor_counts <- neighbor_project_info %>%
+                filter(non_project %in% inner_neighbors) %>%
+                arrange(desc(project_count)) %>%
+                pull(non_project)
+
+              inner_radius_base <- 600 # increase to create more space between projects nodes and nodes with more connections
+              angles_inner <- seq(0, 2 * pi, length.out = n_inner + 1)[-1]
+
+              jitter_inner <- 0.05 * inner_radius_base
+              for (i in seq_len(n_inner)) {
+                nid <- inner_neighbor_counts[i]
+                idx_n <- which(nds$id == nid)
+                if (length(idx_n) == 1) {
+                  nds$x[idx_n] <- (inner_radius_base + runif(1, -jitter_inner, jitter_inner)) * cos(angles_inner[i])
+                  nds$y[idx_n] <- (inner_radius_base + runif(1, -jitter_inner, jitter_inner)) * sin(angles_inner[i])
+                  nds$fixed[idx_n] <- TRUE
+                  nds$physics[idx_n] <- FALSE
+                }
+              }
+            }
+
+
+            # For outer neighbors: assign each outer neighbor to a hub (inner neighbor) if they share a project.
+            # Otherwise assign it to the center hub.
+            # This creates for each hub a list of leaf nodes to place on a rotated 180° arc facing the center.
+            outer_assignments <- list() # named by hub id (or "center")
+            # initialize lists for each inner neighbor
+            for (hid in inner_neighbors) outer_assignments[[hid]] <- character(0)
+            outer_assignments[["center"]] <- character(0)
+
+            for (oid in outer_neighbors) {
+              # projects connected to this outer node
+              projs_oid <- eds_proj_links %>%
+                filter(non_project == oid) %>%
+                pull(project) %>%
+                unique()
+              # find inner neighbors that share any project
+              candidate_hubs <- c()
+              if (length(projs_oid) > 0 && length(inner_neighbors) > 0) {
+                candidate_hubs <- eds_proj_links %>%
+                  filter(project %in% projs_oid, non_project %in% inner_neighbors) %>%
+                  pull(non_project) %>%
+                  unique()
+              }
+              if (length(candidate_hubs) >= 1) {
+                # assign to first candidate hub (deterministic)
+                outer_assignments[[candidate_hubs[1]]] <- c(outer_assignments[[candidate_hubs[1]]], oid)
+              } else {
+                # fallback to center
+                outer_assignments[["center"]] <- c(outer_assignments[["center"]], oid)
+              }
+            }
+
+            # Also include neighbor nodes that are non-project nodes but not present in non_proj_project_counts
+            # Treat them as outer and attach to center
+            missing_neighbors <- setdiff(neighbor_ids, c(inner_neighbors, outer_neighbors))
+            if (length(missing_neighbors) > 0) {
+              for (mn in missing_neighbors) {
+                if (mn %in% non_project_ids) {
+                  outer_assignments[["center"]] <- c(outer_assignments[["center"]], mn)
+                }
+              }
+            }
+
+            # Place outer nodes for each hub on a rotated 180° arc facing the center
+            # arc equally spaced across 180° (Option A spacing)
+            # Place outer nodes for each hub on a rotated 180° arc facing the center
+            # Place outer nodes on 180° arc relative to each hub
+            outer_radius_base <- 400 # increased from 210
+            spacing_factor <- 25 # increase spacing for more space between nodes
+
+            for (hid in names(outer_assignments)) {
+              assigned <- outer_assignments[[hid]]
+              n_assigned <- length(assigned)
+              if (n_assigned == 0) next
+
+              if (hid == "center") {
+                hub_x <- nds$x[idx_sel]
+                hub_y <- nds$y[idx_sel]
+                angle_hub <- -pi / 2
+              } else {
+                idx_h <- which(nds$id == hid)
+                if (length(idx_h) != 1) next
+                hub_x <- nds$x[idx_h]
+                hub_y <- nds$y[idx_h]
+                angle_hub <- atan2(0 - hub_y, 0 - hub_x)
+              }
+
+              # Dynamically scale radius for many nodes
+              ring_radius <- outer_radius_base + max(0, n_assigned - 1) * spacing_factor
+
+              theta_min <- angle_hub - pi / 2
+              theta_max <- angle_hub + pi / 2
+              angles_assigned <- if (n_assigned == 1) (theta_min + theta_max) / 2 else seq(theta_min, theta_max, length.out = n_assigned + 1)[-1]
+
+              jitter_amt <- ring_radius * 0.05
+              for (j in seq_len(n_assigned)) {
+                oid <- assigned[j]
+                idx_o <- which(nds$id == oid)
+                if (length(idx_o) == 1) {
+                  nds$x[idx_o] <- hub_x + (ring_radius + runif(1, -jitter_amt, jitter_amt)) * cos(angles_assigned[j])
+                  nds$y[idx_o] <- hub_y + (ring_radius + runif(1, -jitter_amt, jitter_amt)) * sin(angles_assigned[j])
+                  nds$fixed[idx_o] <- TRUE
+                  nds$physics[idx_o] <- FALSE
+                }
+              }
+            }
+
+            # For any neighbor inner nodes that were not placed (edge cases), ensure smallest fallback
+            for (hid in inner_neighbors) {
+              idx_h <- which(nds$id == hid)
+              if (length(idx_h) == 1 && (is.na(nds$x[idx_h]) || is.na(nds$y[idx_h]))) {
+                nds$x[idx_h] <- runif(1, -inner_radius, inner_radius)
+                nds$y[idx_h] <- runif(1, -inner_radius, inner_radius)
+                nds$fixed[idx_h] <- TRUE
+                nds$physics[idx_h] <- FALSE
+              }
+            }
+
+            # Transfer coordinates back to nodes
+            nodes <- nds
+            nodes_positions_assigned <- TRUE
+          } # end if sel_row found
+        },
+        silent = TRUE
+      )
+    } # end if (!is.null(selected_name_for_graph))
+
     # Create the network
+    # Note: visNetwork will respect per-node 'physics' boolean and 'fixed' attributes.
+    # We enable physics globally so unplaced nodes can still move,
+    # while nodes with physics = FALSE remain fixed in their assigned positions.
     network <- visNetwork(nodes, edges, height = "600px") %>%
       visNodes(shadow = TRUE, borderWidth = 1) %>%
       visEdges(smooth = FALSE) %>%
       visOptions(highlightNearest = TRUE) %>%
-      visEvents(select = "function(nodes) { Shiny.setInputValue('projects_page_graph_network_output_selected', nodes); }") %>%
-      visPhysics(solver = "forceAtlas2Based", stabilization = TRUE)
-    
+      visEvents(select = "function(nodes) { Shiny.setInputValue('projects_page_graph_network_output_selected', nodes); }")
+
+    # If we assigned positions to nodes, keep physics enabled globally but per-node physics flags control motion.
+    # This way: assigned nodes (physics = FALSE) stay fixed; unassigned nodes (physics = TRUE) move.
+    network <- network %>% visPhysics(enabled = TRUE, solver = "forceAtlas2Based", stabilization = TRUE)
+
     # Add group styling only if groups exist
     if ("Selected Researcher" %in% nodes$group) {
       network <- network %>% visGroups(groupname = "Selected Researcher", color = list(background = "#4CAF50", border = "#388E3C"))
@@ -416,7 +645,7 @@ server_graph_projects_page <- function(input, output, session, rv) {
     if ("Participating Company" %in% nodes$group) {
       network <- network %>% visGroups(groupname = "Participating Company", color = list(background = "#F77777", border = "#e64d4dff"))
     }
-    
+
     network
   })
 
