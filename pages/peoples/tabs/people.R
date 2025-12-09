@@ -67,7 +67,7 @@ server_table_people <- function(input, output, session, rv) {
     output$companies_page_people_tab_select_input <- renderUI({
         data <- joined_people_data()
         selectInput("select_name", "Select a researcher:",
-                    choices = c("", data$name.x),
+                    choices = c("", data$name.x %>% sort()),
                     selected = rv$selected_node_researcher_name
         )
     })
@@ -141,8 +141,22 @@ server_table_people <- function(input, output, session, rv) {
 
         # Remove columns that exist in the dataframe
         existing_columns_to_hide <- columns_to_hide[columns_to_hide %in% colnames(df)]
-        df <- df[, !colnames(df) %in% existing_columns_to_hide, drop = FALSE]
-
+        df <- df[, !colnames(df) %in% existing_columns_to_hide, drop = FALSE] %>%
+          rename(researcher_name = name.x,
+                 researcher_role = role.x,
+                 project_name = name.y,
+                 project_description = description.x,
+                 project_total_budget = total_budget,
+                 project_funding_source = funding_source,
+                 project_type = type,
+                 ext_role = role.y,
+                 ext_contact_name = name.x.x,
+                 ext_email = email,
+                 ext_phone = phone,
+                 ext_job_title = job_title,
+                 ext_department = department,
+                 ext_company = name.y.y) %>%
+          select(project_name, researcher_role, ext_role, ext_contact_name, ext_department, ext_job_title, ext_email, ext_phone, project_description, project_total_budget, project_type,)
 
         DT::datatable(
             df,

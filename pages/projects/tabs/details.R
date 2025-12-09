@@ -91,7 +91,7 @@ server_details_projects_page <- function(input, output, session, rv) {
       ylab("Projects involved") +
       theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
       theme(text = element_text(size = 16)) +
-      ggtitle("Project field distribution across companies for projects related to choosen researcher")
+      ggtitle("Project field distribution across companies related to choosen researcher")
   })
 
   output$projects_page_details_plot_output <- renderPlot({

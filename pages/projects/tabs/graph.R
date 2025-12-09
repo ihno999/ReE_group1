@@ -72,7 +72,7 @@ ui_graph_projects_page <- sidebarLayout(
 
     # --- NODE DETAILS RELATED PROJECTS ---
     card(
-      h4("Node Information Related Projects"),
+      h4("Connected Projects"),
       div(
         dataTableOutput("projects_page_graph_node_info_related_projects_output"),
         style = "font-size:90%"
@@ -252,7 +252,7 @@ server_graph_projects_page <- function(input, output, session, rv) {
       researcher_pattern <- "^researcher_"
       if (grepl(researcher_pattern, node_id)) {
         researcher_id <- as.integer(gsub(researcher_pattern, "", node_id))
-        node_information_table <- df_researchers_and_groups %>% filter(employee_id == researcher_id)
+        node_information_table <- df_researchers_and_groups %>% filter(employee_id == researcher_id) %>% select(c(main_research_group_name, researcher_name))
         rv$selected_node_researcher_name <- node_information_table$researcher_name
       }
 
@@ -260,7 +260,7 @@ server_graph_projects_page <- function(input, output, session, rv) {
       company_pattern <- "^company_"
       if (grepl(company_pattern, node_id)) {
         company_id_s <- as.integer(gsub(company_pattern, "", node_id))
-        node_information_table <- company_data %>% filter(company_id == company_id_s)
+        node_information_table <- company_data %>% filter(company_id == company_id_s) %>% select(!(company_id))
         rv$selected_node_company_name <- node_information_table$name
       }
 
@@ -280,6 +280,20 @@ server_graph_projects_page <- function(input, output, session, rv) {
             )
           })
         }
+
+        # Add responsible group name.
+        node_information_table$responsible_group_name <- lapply(node_information_table$responsible_group, function(id) {
+          responsible_group_namee <- research_groups_data %>% filter(group_id == id) %>% select(name)
+          return(as.character(responsible_group_namee))
+        })
+
+        # Add responsible employee name.
+        node_information_table$responsible_employee_name <- lapply(node_information_table$responsible_employee, function(id) {
+          responsible_employee_namee <- researchers_data %>% filter(employee_id == id) %>% select(name)
+          return(as.character(responsible_employee_namee))
+        })
+
+        node_information_table <- node_information_table %>% select(name, description, responsible_employee_name, responsible_group_name, total_budget, funding_source, type, start_date, end_date)
       }
 
       node_information_table
@@ -352,9 +366,9 @@ server_graph_projects_page <- function(input, output, session, rv) {
         node_information_table_related_projects <- df_connected_nodes
       }
 
-      rv$selected_node_connected_projects <- node_information_table_related_projects$connected_project_name
-      node_information_table_related_projects
-    },
+    rv$selected_node_connected_projects <- node_information_table_related_projects$connected_project_name
+    node_information_table_related_projects %>% select(connected_project_name) %>% rename('project_name' = 'connected_project_name')
+  },
     options = list(dom = "t"),
     escape = FALSE
   )
@@ -676,7 +690,8 @@ server_graph_projects_page <- function(input, output, session, rv) {
       cbind(sum_digit = 1) %>%
       group_by(company_name) %>%
       mutate(sort_digit = n()) %>%
-      ungroup()
+      ungroup() %>%
+      select(!c(sum_digit, sort_digit))
   })
 
   projects_page_graph_network_df_output_2 <- renderDataTable(
