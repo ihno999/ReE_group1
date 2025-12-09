@@ -152,8 +152,15 @@ server_table_company <- function(input, output, session, rv) {
     # Remove columns that exist in the dataframe
     existing_columns_to_hide <- columns_to_hide[columns_to_hide %in% colnames(df)]
     df <- df[, !colnames(df) %in% existing_columns_to_hide, drop = FALSE] %>% na.omit() %>%
-      select(project_name, type, researcher_name, contact_name, department, job_title, email, phone, role) %>%
-      rename(ext_contact_name = contact_name, ext_department = department, ext_job_title = job_title, ext_email = email, ext_phone = phone, ext_role = role, int_contact_name = researcher_name)
+      select(project_name, type, researcher_name, contact_name, department, job_title, email, phone, role, description.y) %>%
+      rename(ext_contact_name = contact_name,
+             ext_department = department,
+             ext_job_title = job_title,
+             ext_email = email,
+             ext_phone = phone,
+             ext_role = role,
+             int_contact_name = researcher_name,
+             project_description = description.y)
 
     DT::datatable(
       df,
