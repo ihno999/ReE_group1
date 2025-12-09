@@ -47,10 +47,27 @@ df_researchers_and_groups <-
     merge(researchers_data, research_groups_data, by.x = "main_research_group", by.y = "group_id") %>%
     rename("researcher_name" = "name.x", "main_research_group_name" = "name.y")
 
-# df_general_with_project_fields <- dbGetQuery(con, q_df_general)
-df_general <- dbGetQuery(con, q_df_general)
-df_general_with_project_fields <- dbGetQuery(con, q_df_general_with_project_fields)
-df_for_project_details_stacked_bar_chart <- dbGetQuery(con, q_df_for_project_details_stacked_bar_chart)
+
+# ------------------------------------------------------------------------------
+
+# Dataframes from SQL queries                                                                                       (local version)
+# df_general <- dbGetQuery(con, q_df_general)
+# df_general_with_project_fields <- dbGetQuery(con, q_df_general_with_project_fields)
+# df_for_project_details_stacked_bar_chart <- dbGetQuery(con, q_df_for_project_details_stacked_bar_chart)
+
+# Load precomputed queries instead of DB queries                                                              (deployed/github version)
+df_general <- readRDS("data/processed/df_general.rds")
+df_general_with_project_fields <- readRDS("data/processed/df_general_with_project_fields.rds")
+df_for_project_details_stacked_bar_chart <- readRDS("data/processed/df_for_project_details_stacked_bar_chart.rds")
+df_for_project_graph_network <- readRDS("data/processed/df_for_project_graph_network.rds")
+
+# don't forget to create these RDS files when updating the database or the queries!
+# Create local files once (execute in R console/terminal):
+# saveRDS(df_for_project_graph_network, "data/processed/df_for_project_graph_network.rds")
+# saveRDS(df_general, "data/processed/df_general.rds")
+# saveRDS(df_general_with_project_fields, "data/processed/df_general_with_project_fields.rds")
+
+# ------------------------------------------------------------------------------
 
 # bq1_a1_data
 df_for_project_graph_network <- dbGetQuery(con, q_df_for_project_graph_network)
