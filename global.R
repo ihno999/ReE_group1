@@ -10,7 +10,7 @@ library(lubridate)
 library(bslib)
 library(ggplot2)
 library(viridis)
-library(duckdb)
+# library(duckdb)       # commented out for deployment
 library(forcats)
 library(igraph)
 
@@ -32,15 +32,15 @@ researchers_data <- read.csv("data/raw/Researchers.csv", stringsAsFactors = FALS
 #   mutate(date = as.Date(date))
 
 
-# DuckDB
-con <- dbConnect(duckdb())
-duckdb_register(con, "companies", company_data)
-duckdb_register(con, "company_contacts", company_contacts_data)
-duckdb_register(con, "project_board", project_board_data)
-duckdb_register(con, "projects", projects_data)
-duckdb_register(con, "research_groups", research_groups_data)
-duckdb_register(con, "research_participation", research_participation_data)
-duckdb_register(con, "researchers", researchers_data)
+# DuckDB (only locally, not in deployed version/ commented out for deployment)
+# con <- dbConnect(duckdb())
+# duckdb_register(con, "companies", company_data)
+# duckdb_register(con, "company_contacts", company_contacts_data)
+# duckdb_register(con, "project_board", project_board_data)
+# duckdb_register(con, "projects", projects_data)
+# duckdb_register(con, "research_groups", research_groups_data)
+# duckdb_register(con, "research_participation", research_participation_data)
+# duckdb_register(con, "researchers", researchers_data)
 
 # Custom views.
 df_researchers_and_groups <-
