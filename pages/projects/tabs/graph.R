@@ -626,6 +626,29 @@ server_graph_projects_page <- function(input, output, session, rv) {
       )
     } # end if (!is.null(selected_name_for_graph))
 
+    determine_company_edge_color <- function(row, output) {
+      from <- row$from
+      to <- row$to
+      width <- 2
+      # If it is an edge between company and project.
+      if ((grepl("company_", from) && grepl("project_", to)) || (grepl("project_", from) && grepl("company_", to))) {
+        company_idd = if (grepl("company_", from)) sub("company_", "", from) else sub("company_", "", to)
+        project_idd = if (grepl("project_", from)) sub("project_", "", from) else sub("project_", "", to)
+
+        # Get the role from df_filtered_for_graph()
+        role <- as.character(df_filtered_for_graph() %>% filter(project_id == project_idd) %>% filter(company_id == company_idd) %>% select(company_role) %>% slice(1:1))
+
+        # Return width based on company_role
+        if (role == 'Participation') {width <- 2}
+        if (role == 'Steering Committee') {width <- 4}
+        if (role == 'Funding') {width <- 6}
+      }
+
+      width
+    }
+
+    edges$width <- apply(edges, 1, determine_company_edge_color)
+
     # Create the network
     # Note: visNetwork will respect per-node 'physics' boolean and 'fixed' attributes.
     # We enable physics globally so unplaced nodes can still move,
@@ -651,13 +674,16 @@ server_graph_projects_page <- function(input, output, session, rv) {
       network <- network %>% visGroups(groupname = "Project", color = list(background = "#2196F3", border = "#1976D2"))
     }
     if ("Funding Company" %in% nodes$group) {
-      network <- network %>% visGroups(groupname = "Funding Company", color = list(background = "#B83027", border = "#a3251c"))
+      # network <- network %>% visGroups(groupname = "Funding Company", color = list(background = "#B83027", border = "#a3251c"))
+      network <- network %>% visGroups(groupname = "Funding Company", color = list(background = "red", border = "#a3251c"))
     }
     if ("Steering Committee Company" %in% nodes$group) {
-      network <- network %>% visGroups(groupname = "Steering Committee Company", color = list(background = "#F44336", border = "#D32F2F"))
+      # network <- network %>% visGroups(groupname = "Steering Committee Company", color = list(background = "#F44336", border = "#D32F2F"))
+      network <- network %>% visGroups(groupname = "Steering Committee Company", color = list(background = "red", border = "#D32F2F"))
     }
     if ("Participating Company" %in% nodes$group) {
-      network <- network %>% visGroups(groupname = "Participating Company", color = list(background = "#F77777", border = "#e64d4dff"))
+      # network <- network %>% visGroups(groupname = "Participating Company", color = list(background = "#F77777", border = "#e64d4dff"))
+      network <- network %>% visGroups(groupname = "Participating Company", color = list(background = "red", border = "#e64d4dff"))
     }
 
     network

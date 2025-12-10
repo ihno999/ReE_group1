@@ -9,5 +9,5 @@ RUN --mount=type=cache,id=renv-cache,target=/root/.cache/R/renv R -e 'renv::rest
 WORKDIR /srv/shiny-server/
 COPY . /srv/shiny-server/
 EXPOSE 3838
-CMD R -e 'renv::restore()'
-CMD R -e 'shiny::runApp("/srv/shiny-server",host="0.0.0.0",port=3838)'
+#CMD R -e 'renv::restore()'
+#CMD R -e 'shiny::runApp("/srv/shiny-server",host="0.0.0.0",port=3838)'
