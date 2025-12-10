@@ -40,23 +40,32 @@ ui_graph_projects_page <- sidebarLayout(
           div(style = "width:14px; height:14px; background:#2196F3; border-radius:50%; margin-right:6px;"),
           "Projects"
         ),
-        # Companies: Participation Companies
+
+        # Companies
         div(
           style = "display:flex; align-items:center;",
-          div(style = "width:14px; height:14px; background:#F77777; border-radius:50%; margin-right:6px;"),
-          "Participating Companies"
+          div(style = "width:14px; height:14px; background:#E53935; border-radius:50%; margin-right:6px;"),
+          "Companies"
         ),
-        # Companies: Steering Committee
+        # Participating
         div(
           style = "display:flex; align-items:center;",
-          div(style = "width:14px; height:14px; background:#F44336; border-radius:50%; margin-right:6px;"),
+          div(style = "width:40px; height:0; border-top:2px solid #888888; margin-right:6px;"),
+          "Participating"
+        ),
+
+        # Steering Committee
+        div(
+          style = "display:flex; align-items:center;",
+          div(style = "width:40px; height:0; border-top:3px solid #888888; margin-right:6px;"),
           "Steering Committee"
         ),
-        # Companies: Funding Companies
+
+        # Funding
         div(
           style = "display:flex; align-items:center;",
-          div(style = "width:14px; height:14px; background:#B83027; border-radius:50%; margin-right:6px;"),
-          "Funding Companies"
+          div(style = "width:40px; height:0; border-top:6px solid #888888; margin-right:6px;"),
+          "Funding"
         ),
       )
     ),
