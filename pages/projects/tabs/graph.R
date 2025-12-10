@@ -440,11 +440,13 @@ server_graph_projects_page <- function(input, output, session, rv) {
     # Adjust node size and font if All Researchers is selected ---
     all_selected <- !is.null(input$projects_page_graph_selection) && input$projects_page_graph_selection == "All researchers"
     if (all_selected) {
-      nodes$size <- 15 # smaller nodes
-      nodes$font.size <- 28 # bigger labels
+      # nodes$size <- 15 # smaller nodes
+      nodes$size <- 25 # smaller nodes
+      # nodes$font.size <- 28 # bigger labels
+      nodes$font.size <- 11 # bigger labels
     } else {
-      nodes$size <- 30 # default node size
-      nodes$font.size <- 18 # default label size
+      nodes$size <- 25 # default node size
+      nodes$font.size <- 11 # default label size
     }
 
     # Focal radial layout when a specific researcher/company is selected ----
@@ -661,10 +663,10 @@ server_graph_projects_page <- function(input, output, session, rv) {
       )
     } # end if (!is.null(selected_name_for_graph))
 
-    determine_company_edge_color <- function(row, output) {
+    determine_company_edge_width <- function(row, output) {
       from <- row$from
       to <- row$to
-      width <- 2
+      width <- 1
       # If it is an edge between company and project.
       if ((grepl("company_", from) && grepl("project_", to)) || (grepl("project_", from) && grepl("company_", to))) {
         company_idd <- if (grepl("company_", from)) sub("company_", "", from) else sub("company_", "", to)
@@ -675,20 +677,20 @@ server_graph_projects_page <- function(input, output, session, rv) {
 
         # Return width based on company_role
         if (role == "Participation") {
-          width <- 2
+          width <- 1
         }
         if (role == "Steering Committee") {
           width <- 4
         }
         if (role == "Funding") {
-          width <- 6
+          width <- 7
         }
       }
 
       width
     }
 
-    edges$width <- apply(edges, 1, determine_company_edge_color)
+    edges$width <- apply(edges, 1, determine_company_edge_width)
 
     # Create the network
     # Note: visNetwork will respect per-node 'physics' boolean and 'fixed' attributes.
@@ -706,25 +708,25 @@ server_graph_projects_page <- function(input, output, session, rv) {
 
     # Add group styling only if groups exist
     if ("Selected Researcher" %in% nodes$group) {
-      network <- network %>% visGroups(groupname = "Selected Researcher", color = list(background = "#4CAF50", border = "#388E3C"))
+      network <- network %>% visGroups(groupname = "Selected Researcher", color = list(background = "#4CAF50", border = "#4CAF50"))
     }
     if ("Other Researcher" %in% nodes$group) {
-      network <- network %>% visGroups(groupname = "Other Researcher", color = list(background = "#FFC107", border = "#FFA000"))
+      network <- network %>% visGroups(groupname = "Other Researcher", color = list(background = "#FFC107", border = "#FFC107"))
     }
     if ("Project" %in% nodes$group) {
-      network <- network %>% visGroups(groupname = "Project", color = list(background = "#2196F3", border = "#1976D2"))
+      network <- network %>% visGroups(groupname = "Project", color = list(background = "#2196F3", border = "#2196F3"))
     }
     if ("Funding Company" %in% nodes$group) {
-      # network <- network %>% visGroups(groupname = "Funding Company", color = list(background = "#B83027", border = "#a3251c"))
-      network <- network %>% visGroups(groupname = "Funding Company", color = list(background = "red", border = "#a3251c"))
+      # network <- network %>% visGroups(groupname = "Funding Company", color = list(background = "#B83027", border = "#B83027"))
+      network <- network %>% visGroups(groupname = "Funding Company", color = list(background = "#FF0000", border = "#FF0000"))
     }
     if ("Steering Committee Company" %in% nodes$group) {
-      # network <- network %>% visGroups(groupname = "Steering Committee Company", color = list(background = "#F44336", border = "#D32F2F"))
-      network <- network %>% visGroups(groupname = "Steering Committee Company", color = list(background = "red", border = "#D32F2F"))
+      # network <- network %>% visGroups(groupname = "Steering Committee Company", color = list(background = "#F44336", border = "#F44336"))
+      network <- network %>% visGroups(groupname = "Steering Committee Company", color = list(background = "#FF0000", border = "#FF0000"))
     }
     if ("Participating Company" %in% nodes$group) {
-      # network <- network %>% visGroups(groupname = "Participating Company", color = list(background = "#F77777", border = "#e64d4dff"))
-      network <- network %>% visGroups(groupname = "Participating Company", color = list(background = "red", border = "#e64d4dff"))
+      # network <- network %>% visGroups(groupname = "Participating Company", color = list(background = "#F77777", border = "#F77777"))
+      network <- network %>% visGroups(groupname = "Participating Company", color = list(background = "#FF0000", border = "#FF0000"))
     }
 
     network
