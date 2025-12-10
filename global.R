@@ -10,7 +10,7 @@ library(lubridate)
 library(bslib)
 library(ggplot2)
 library(viridis)
-library(duckdb)
+library(duckdb) # commented out for deployment
 library(forcats)
 library(igraph)
 
@@ -32,7 +32,7 @@ researchers_data <- read.csv("data/raw/Researchers.csv", stringsAsFactors = FALS
 #   mutate(date = as.Date(date))
 
 
-# DuckDB
+# DuckDB (only locally, not in deployed version/ commented out for deployment)
 con <- dbConnect(duckdb())
 duckdb_register(con, "companies", company_data)
 duckdb_register(con, "company_contacts", company_contacts_data)
@@ -51,15 +51,15 @@ df_researchers_and_groups <-
 # ------------------------------------------------------------------------------
 
 # Dataframes from SQL queries                                                                                       (local version)
-# df_general <- dbGetQuery(con, q_df_general)
-# df_general_with_project_fields <- dbGetQuery(con, q_df_general_with_project_fields)
-# df_for_project_details_stacked_bar_chart <- dbGetQuery(con, q_df_for_project_details_stacked_bar_chart)
+df_general <- dbGetQuery(con, q_df_general)
+df_general_with_project_fields <- dbGetQuery(con, q_df_general_with_project_fields)
+df_for_project_details_stacked_bar_chart <- dbGetQuery(con, q_df_for_project_details_stacked_bar_chart)
 
 # Load precomputed queries instead of DB queries                                                              (deployed/github version)
-df_general <- readRDS("data/processed/df_general.rds")
-df_general_with_project_fields <- readRDS("data/processed/df_general_with_project_fields.rds")
-df_for_project_details_stacked_bar_chart <- readRDS("data/processed/df_for_project_details_stacked_bar_chart.rds")
-df_for_project_graph_network <- readRDS("data/processed/df_for_project_graph_network.rds")
+# df_general <- readRDS("data/processed/df_general.rds")
+# df_general_with_project_fields <- readRDS("data/processed/df_general_with_project_fields.rds")
+# df_for_project_details_stacked_bar_chart <- readRDS("data/processed/df_for_project_details_stacked_bar_chart.rds")
+# df_for_project_graph_network <- readRDS("data/processed/df_for_project_graph_network.rds")
 
 # don't forget to create these RDS files when updating the database or the queries!
 # Create local files once (execute in R console/terminal):

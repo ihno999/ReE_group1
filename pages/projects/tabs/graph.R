@@ -40,23 +40,32 @@ ui_graph_projects_page <- sidebarLayout(
           div(style = "width:14px; height:14px; background:#2196F3; border-radius:50%; margin-right:6px;"),
           "Projects"
         ),
-        # Companies: Participation Companies
+
+        # Companies
         div(
           style = "display:flex; align-items:center;",
-          div(style = "width:14px; height:14px; background:#F77777; border-radius:50%; margin-right:6px;"),
-          "Participating Companies"
+          div(style = "width:14px; height:14px; background:#E53935; border-radius:50%; margin-right:6px;"),
+          "Companies"
         ),
-        # Companies: Steering Committee
+        # Participating
         div(
           style = "display:flex; align-items:center;",
-          div(style = "width:14px; height:14px; background:#F44336; border-radius:50%; margin-right:6px;"),
+          div(style = "width:40px; height:0; border-top:2px solid #888888; margin-right:6px;"),
+          "Participating"
+        ),
+
+        # Steering Committee
+        div(
+          style = "display:flex; align-items:center;",
+          div(style = "width:40px; height:0; border-top:3px solid #888888; margin-right:6px;"),
           "Steering Committee"
         ),
-        # Companies: Funding Companies
+
+        # Funding
         div(
           style = "display:flex; align-items:center;",
-          div(style = "width:14px; height:14px; background:#B83027; border-radius:50%; margin-right:6px;"),
-          "Funding Companies"
+          div(style = "width:40px; height:0; border-top:6px solid #888888; margin-right:6px;"),
+          "Funding"
         ),
       )
     ),
@@ -252,7 +261,9 @@ server_graph_projects_page <- function(input, output, session, rv) {
       researcher_pattern <- "^researcher_"
       if (grepl(researcher_pattern, node_id)) {
         researcher_id <- as.integer(gsub(researcher_pattern, "", node_id))
-        node_information_table <- df_researchers_and_groups %>% filter(employee_id == researcher_id) %>% select(c(main_research_group_name, researcher_name))
+        node_information_table <- df_researchers_and_groups %>%
+          filter(employee_id == researcher_id) %>%
+          select(c(main_research_group_name, researcher_name))
         rv$selected_node_researcher_name <- node_information_table$researcher_name
       }
 
@@ -260,7 +271,9 @@ server_graph_projects_page <- function(input, output, session, rv) {
       company_pattern <- "^company_"
       if (grepl(company_pattern, node_id)) {
         company_id_s <- as.integer(gsub(company_pattern, "", node_id))
-        node_information_table <- company_data %>% filter(company_id == company_id_s) %>% select(!(company_id))
+        node_information_table <- company_data %>%
+          filter(company_id == company_id_s) %>%
+          select(!(company_id))
         rv$selected_node_company_name <- node_information_table$name
       }
 
@@ -283,13 +296,17 @@ server_graph_projects_page <- function(input, output, session, rv) {
 
         # Add responsible group name.
         node_information_table$responsible_group_name <- lapply(node_information_table$responsible_group, function(id) {
-          responsible_group_namee <- research_groups_data %>% filter(group_id == id) %>% select(name)
+          responsible_group_namee <- research_groups_data %>%
+            filter(group_id == id) %>%
+            select(name)
           return(as.character(responsible_group_namee))
         })
 
         # Add responsible employee name.
         node_information_table$responsible_employee_name <- lapply(node_information_table$responsible_employee, function(id) {
-          responsible_employee_namee <- researchers_data %>% filter(employee_id == id) %>% select(name)
+          responsible_employee_namee <- researchers_data %>%
+            filter(employee_id == id) %>%
+            select(name)
           return(as.character(responsible_employee_namee))
         })
 
@@ -366,9 +383,17 @@ server_graph_projects_page <- function(input, output, session, rv) {
         node_information_table_related_projects <- df_connected_nodes
       }
 
-    rv$selected_node_connected_projects <- node_information_table_related_projects$connected_project_name
-    node_information_table_related_projects %>% select(connected_project_name) %>% rename('project_name' = 'connected_project_name')
-  },
+      # --- If NULL (e.g., project node selected) → return an empty table silently ---
+      if (is.null(node_information_table_related_projects)) {
+        return(data.frame()) # <- shows empty table, no error
+      }
+
+      rv$selected_node_connected_projects <- node_information_table_related_projects$connected_project_name
+
+      node_information_table_related_projects %>%
+        select(connected_project_name) %>%
+        rename("project_name" = "connected_project_name")
+    },
     options = list(dom = "t"),
     escape = FALSE
   )
@@ -412,7 +437,17 @@ server_graph_projects_page <- function(input, output, session, rv) {
         to = as.character(to)
       )
 
-    # ---- NEW: Focal radial layout when a specific researcher/company is selected ----
+    # Adjust node size and font if All Researchers is selected ---
+    all_selected <- !is.null(input$projects_page_graph_selection) && input$projects_page_graph_selection == "All researchers"
+    if (all_selected) {
+      nodes$size <- 15 # smaller nodes
+      nodes$font.size <- 28 # bigger labels
+    } else {
+      nodes$size <- 30 # default node size
+      nodes$font.size <- 18 # default label size
+    }
+
+    # Focal radial layout when a specific researcher/company is selected ----
     # Behavior:
     #  - If selected_name_for_graph is NULL -> keep the original physics-based layout (All researchers).
     #  - If a specific researcher/company is selected:
@@ -626,6 +661,35 @@ server_graph_projects_page <- function(input, output, session, rv) {
       )
     } # end if (!is.null(selected_name_for_graph))
 
+    determine_company_edge_color <- function(row, output) {
+      from <- row$from
+      to <- row$to
+      width <- 2
+      # If it is an edge between company and project.
+      if ((grepl("company_", from) && grepl("project_", to)) || (grepl("project_", from) && grepl("company_", to))) {
+        company_idd <- if (grepl("company_", from)) sub("company_", "", from) else sub("company_", "", to)
+        project_idd <- if (grepl("project_", from)) sub("project_", "", from) else sub("project_", "", to)
+
+        # Get the role from df_filtered_for_graph()
+        role <- as.character(df_filtered_for_graph() %>% filter(project_id == project_idd) %>% filter(company_id == company_idd) %>% select(company_role) %>% slice(1:1))
+
+        # Return width based on company_role
+        if (role == "Participation") {
+          width <- 2
+        }
+        if (role == "Steering Committee") {
+          width <- 4
+        }
+        if (role == "Funding") {
+          width <- 6
+        }
+      }
+
+      width
+    }
+
+    edges$width <- apply(edges, 1, determine_company_edge_color)
+
     # Create the network
     # Note: visNetwork will respect per-node 'physics' boolean and 'fixed' attributes.
     # We enable physics globally so unplaced nodes can still move,
@@ -651,13 +715,16 @@ server_graph_projects_page <- function(input, output, session, rv) {
       network <- network %>% visGroups(groupname = "Project", color = list(background = "#2196F3", border = "#1976D2"))
     }
     if ("Funding Company" %in% nodes$group) {
-      network <- network %>% visGroups(groupname = "Funding Company", color = list(background = "#B83027", border = "#a3251c"))
+      # network <- network %>% visGroups(groupname = "Funding Company", color = list(background = "#B83027", border = "#a3251c"))
+      network <- network %>% visGroups(groupname = "Funding Company", color = list(background = "red", border = "#a3251c"))
     }
     if ("Steering Committee Company" %in% nodes$group) {
-      network <- network %>% visGroups(groupname = "Steering Committee Company", color = list(background = "#F44336", border = "#D32F2F"))
+      # network <- network %>% visGroups(groupname = "Steering Committee Company", color = list(background = "#F44336", border = "#D32F2F"))
+      network <- network %>% visGroups(groupname = "Steering Committee Company", color = list(background = "red", border = "#D32F2F"))
     }
     if ("Participating Company" %in% nodes$group) {
-      network <- network %>% visGroups(groupname = "Participating Company", color = list(background = "#F77777", border = "#e64d4dff"))
+      # network <- network %>% visGroups(groupname = "Participating Company", color = list(background = "#F77777", border = "#e64d4dff"))
+      network <- network %>% visGroups(groupname = "Participating Company", color = list(background = "red", border = "#e64d4dff"))
     }
 
     network
@@ -686,12 +753,16 @@ server_graph_projects_page <- function(input, output, session, rv) {
       filtered <- data %>% filter(researcher_name == input$projects_page_graph_selection)
     }
 
-    filtered %>%
-      cbind(sum_digit = 1) %>%
-      group_by(company_name) %>%
-      mutate(sort_digit = n()) %>%
-      ungroup() %>%
-      select(!c(sum_digit, sort_digit))
+    if (nrow(filtered) != 0) {
+      filtered <- filtered %>%
+        cbind(sum_digit = 1) %>%
+        group_by(company_name) %>%
+        mutate(sort_digit = n()) %>%
+        ungroup() %>%
+        select(!c(sum_digit, sort_digit))
+    }
+
+    filtered
   })
 
   projects_page_graph_network_df_output_2 <- renderDataTable(

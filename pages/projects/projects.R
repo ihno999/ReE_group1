@@ -16,5 +16,5 @@ server_projects <- function(input, output, session, rv) {
 # simple UI combining both tabs (adjust as your app uses)
 ui_projects <- tabsetPanel(
   tabPanel("Graph", ui_graph_projects_page),
-  tabPanel("Details", ui_details_projects_page)
+  tabPanel("Researcher Details", ui_details_projects_page)
 )
