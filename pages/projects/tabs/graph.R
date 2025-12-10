@@ -50,21 +50,21 @@ ui_graph_projects_page <- sidebarLayout(
         # Participating
         div(
           style = "display:flex; align-items:center;",
-          div(style = "width:40px; height:0; border-top:2px solid #888888; margin-right:6px;"),
+          div(style = "width:40px; height:0; border-top:1px solid #888888; margin-right:6px;"),
           "Participating"
         ),
 
         # Steering Committee
         div(
           style = "display:flex; align-items:center;",
-          div(style = "width:40px; height:0; border-top:3px solid #888888; margin-right:6px;"),
+          div(style = "width:40px; height:0; border-top:4px solid #888888; margin-right:6px;"),
           "Steering Committee"
         ),
 
         # Funding
         div(
           style = "display:flex; align-items:center;",
-          div(style = "width:40px; height:0; border-top:6px solid #888888; margin-right:6px;"),
+          div(style = "width:40px; height:0; border-top:7px solid #888888; margin-right:6px;"),
           "Funding"
         ),
       )
