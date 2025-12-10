@@ -5,14 +5,15 @@ library(DT)
 # library(ggExtra)0
 library(ggExtra)
 library(dplyr)
-library(visNetwork)
 library(lubridate)
 library(bslib)
 library(ggplot2)
 library(viridis)
-# library(duckdb)       # commented out for deployment
 library(forcats)
-library(igraph)
+# library(duckdb)       # commented out for deployment
+# library(visNetwork)   # commented out for deployment
+library(networkD3)
+# library(igraph)
 
 # Source helper functions
 source("./R/data_functions.R")
