@@ -686,15 +686,20 @@ server_graph_projects_page <- function(input, output, session, rv) {
       filtered <- data %>% filter(researcher_name == input$projects_page_graph_selection)
     }
 
-    filtered %>%
-      cbind(sum_digit = 1) %>%
-      group_by(company_name) %>%
-      mutate(sort_digit = n()) %>%
-      ungroup() %>%
-      select(!c(sum_digit, sort_digit))
+    if (nrow(filtered) != 0) {
+      filtered <- filtered %>%
+        cbind(sum_digit = 1) %>%
+        group_by(company_name) %>%
+        mutate(sort_digit = n()) %>%
+        ungroup() %>%
+        select(!c(sum_digit, sort_digit))
+    }
+
+    filtered
   })
 
   projects_page_graph_network_df_output_2 <- renderDataTable(
+
     rval_projects_page_graph_network_df_output_2(),
     filter = "top"
   )
