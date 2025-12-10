@@ -437,7 +437,17 @@ server_graph_projects_page <- function(input, output, session, rv) {
         to = as.character(to)
       )
 
-    # ---- NEW: Focal radial layout when a specific researcher/company is selected ----
+    # Adjust node size and font if All Researchers is selected ---
+    all_selected <- !is.null(input$projects_page_graph_selection) && input$projects_page_graph_selection == "All researchers"
+    if (all_selected) {
+      nodes$size <- 15 # smaller nodes
+      nodes$font.size <- 28 # bigger labels
+    } else {
+      nodes$size <- 30 # default node size
+      nodes$font.size <- 18 # default label size
+    }
+
+    # Focal radial layout when a specific researcher/company is selected ----
     # Behavior:
     #  - If selected_name_for_graph is NULL -> keep the original physics-based layout (All researchers).
     #  - If a specific researcher/company is selected:
