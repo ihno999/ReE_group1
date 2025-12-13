@@ -1,2 +1,5 @@
 # .gitignore for stuff that should not be committed to the repository
 .idea
+
+# do not upload data folder to GitHub
+data/
