@@ -1,4 +1,4 @@
-library(shiny)
+### UI
 ui_table_people <- sidebarLayout(
     sidebarPanel(
         h4("Side Panel"),
@@ -28,6 +28,7 @@ ui_table_people <- sidebarLayout(
     )
 )
 
+### Server
 server_table_people <- function(input, output, session, rv) {
     # Filter for people data
     joined_people_data <- reactive({
@@ -48,20 +49,6 @@ server_table_people <- function(input, output, session, rv) {
             distinct(name.y) %>%
             pull(name.y)
     })
-
-    # Update project filter choices based on selected researcher's projects
-    # observe({
-    #     req(input$select_name, input$select_name != "")
-
-    #     projects <- researcher_projects()
-
-    #     updateCheckboxGroupInput(
-    #         session,
-    #         "checkbox_projects_people",
-    #         choices = projects,
-    #         selected = projects # Default to all selected
-    #     )
-    # })
 
     output$companies_page_people_tab_select_input <- renderUI({
         data <- joined_people_data()

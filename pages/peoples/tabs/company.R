@@ -1,15 +1,16 @@
+### UI
 ui_table_company <- sidebarLayout(
-    sidebarPanel(
-        h4("Side Panel"),
-        uiOutput("select_input"),
-        checkboxGroupInput(
-          "checkbox_projects",
-          "Filter by Project:",
-          choices = NULL,
-          selected = NULL
-        ),
-    width = 3
+  sidebarPanel(
+    h4("Side Panel"),
+    uiOutput("select_input"),
+    checkboxGroupInput(
+      "checkbox_projects",
+      "Filter by Project:",
+      choices = NULL,
+      selected = NULL
     ),
+    width = 3
+  ),
   mainPanel(
     card(
       h3("Company Overview"),
@@ -25,8 +26,13 @@ ui_table_company <- sidebarLayout(
   )
 )
 
+
+### Server
+
 server_table_company <- function(input, output, session, rv) {
-  output$email_note <- renderText({"Note: Emails do not correspond to contact names the way we assume they should. This is due to mocking of data."})
+  output$email_note <- renderText({
+    "Note: Emails do not correspond to contact names the way we assume they should. This is due to mocking of data."
+  })
 
   output$pooop <- renderText({
     rv$selection
@@ -34,16 +40,15 @@ server_table_company <- function(input, output, session, rv) {
 
   output$select_input <- renderUI({
     selectInput("select_company", "Select a company:",
-                choices = c("", unique(company_data$name)),
-                # selected = rv$selection
-                selected = rv$selected_node_company_name
+      choices = c("", unique(company_data$name)),
+      selected = rv$selected_node_company_name
     )
   })
 
   # Filter for company data
 
   joined_company_data_2 <- reactive({
-    company_data %>% 
+    company_data %>%
       left_join(company_contacts_data, by = "company_id") %>%
       left_join(project_board_data, by = "contact_id") %>%
       left_join(projects_data, by = "project_id") %>%
@@ -62,7 +67,7 @@ server_table_company <- function(input, output, session, rv) {
       data <- joined_company_data_2() %>%
         filter(company_name == input$select_company)
 
-      if(nrow(data) > 0) {
+      if (nrow(data) > 0) {
         project_choices <- unique(data$project_name)
         return(project_choices)
       }
@@ -78,7 +83,7 @@ server_table_company <- function(input, output, session, rv) {
       session = session,
       inputId = "checkbox_projects",
       choices = projects,
-      selected = if(length(rv$selected_node_connected_projects) == 0) projects else rv$selected_node_connected_projects
+      selected = if (length(rv$selected_node_connected_projects) == 0) projects else rv$selected_node_connected_projects
       # selected = if(length(projects) > 0) projects else NULL
     )
   })
@@ -107,10 +112,10 @@ server_table_company <- function(input, output, session, rv) {
     df <- filtered_company_data()
 
     # Format company description
-    if("company_description" %in% colnames(df) || "description.x" %in% colnames(df)) {
+    if ("company_description" %in% colnames(df) || "description.x" %in% colnames(df)) {
       col_name <- ifelse("company_description" %in% colnames(df), "company_description", "description.x")
       df[[col_name]] <- sapply(df[[col_name]], function(text) {
-        if(is.na(text) || text == "") {
+        if (is.na(text) || text == "") {
           return("")
         }
         paste0(
@@ -122,16 +127,16 @@ server_table_company <- function(input, output, session, rv) {
     }
 
     # Format project description
-    if("project_description" %in% colnames(df) || "description.y" %in% colnames(df)) {
+    if ("project_description" %in% colnames(df) || "description.y" %in% colnames(df)) {
       col_name <- ifelse("project_description" %in% colnames(df), "project_description", "description.y")
       df[[col_name]] <- sapply(df[[col_name]], function(text) {
-        if(is.na(text) || text == "") {
+        if (is.na(text) || text == "") {
           return("")
         }
         paste0(
           '<details><summary>Show</summary><p style="width: 500px">',
           text,
-          '</p></details>'
+          "</p></details>"
         )
       })
     }
@@ -151,16 +156,19 @@ server_table_company <- function(input, output, session, rv) {
 
     # Remove columns that exist in the dataframe
     existing_columns_to_hide <- columns_to_hide[columns_to_hide %in% colnames(df)]
-    df <- df[, !colnames(df) %in% existing_columns_to_hide, drop = FALSE] %>% na.omit() %>%
+    df <- df[, !colnames(df) %in% existing_columns_to_hide, drop = FALSE] %>%
+      na.omit() %>%
       select(project_name, type, researcher_name, contact_name, department, job_title, email, phone, role, description.y) %>%
-      rename(ext_contact_name = contact_name,
-             ext_department = department,
-             ext_job_title = job_title,
-             ext_email = email,
-             ext_phone = phone,
-             ext_role = role,
-             int_contact_name = researcher_name,
-             project_description = description.y)
+      rename(
+        ext_contact_name = contact_name,
+        ext_department = department,
+        ext_job_title = job_title,
+        ext_email = email,
+        ext_phone = phone,
+        ext_role = role,
+        int_contact_name = researcher_name,
+        project_description = description.y
+      )
 
     DT::datatable(
       df,

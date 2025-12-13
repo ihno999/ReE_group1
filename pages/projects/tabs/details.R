@@ -1,5 +1,4 @@
 ### Parameters
-# p_researcher_name <- "Kathleen Bailey"
 p_project_fields <- c("Circular Economy", "Digital Education", "BioTech", "Cybersecurity")
 
 
@@ -46,17 +45,16 @@ server_details_projects_page <- function(input, output, session, rv) {
 
     checkboxGroupInput(
       "projects_page_details_project_fields_checkboxes",
-      "Project fields", choices = project_fields,
+      "Project fields",
+      choices = project_fields,
       selected = selected_vals
     )
   })
 
   output$projects_page_details_researcher_name_output <- renderUI({
-
     selectInput("projects_page_details_researcher_name", "Researcher  ",
-                choices = c("", researchers_data$name),
-                selected = rv$selection
-                # selected = rv$selected_node_researcher_name
+      choices = c("", researchers_data$name),
+      selected = rv$selection
     )
   })
 
@@ -106,13 +104,19 @@ server_details_projects_page <- function(input, output, session, rv) {
   )
 
   # --- push details inputs -> shared rv ---
-  observeEvent(input$projects_page_details_researcher_name, {
-    rv$selection <- input$projects_page_details_researcher_name
-  }, ignoreInit = TRUE)
+  observeEvent(input$projects_page_details_researcher_name,
+    {
+      rv$selection <- input$projects_page_details_researcher_name
+    },
+    ignoreInit = TRUE
+  )
 
-  observeEvent(input$projects_page_details_project_fields_checkboxes, {
-    rv$fields <- input$projects_page_details_project_fields_checkboxes
-  }, ignoreInit = TRUE)
+  observeEvent(input$projects_page_details_project_fields_checkboxes,
+    {
+      rv$fields <- input$projects_page_details_project_fields_checkboxes
+    },
+    ignoreInit = TRUE
+  )
 
   # --- react to shared rv -> details inputs (keep UI synced when graph changes) ---
   observe({

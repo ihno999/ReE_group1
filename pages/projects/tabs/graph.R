@@ -600,7 +600,6 @@ server_graph_projects_page <- function(input, output, session, rv) {
             }
 
             # Place outer nodes for each hub on a rotated 180° arc facing the center
-            # arc equally spaced across 180° (Option A spacing)
             # Place outer nodes for each hub on a rotated 180° arc facing the center
             # Place outer nodes on 180° arc relative to each hub
             outer_radius_base <- 400 # increased from 210
