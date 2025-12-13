@@ -19,6 +19,8 @@ Install required packages:
 
 Run the app with `R> shiny::runApp()`
 
+# Data
+Data can be found in `data/raw` folder. It was loaded using DuckDB, as you can see in `global.R`.
 
 
 # Developers
@@ -33,10 +35,6 @@ Run the app with `R> shiny::runApp()`
 Install package: `install.packages("package-name")`\
 Record the packages: `renv::snapshot()`
 
-## Diagram
-```mermaid
-
-```
 
 ## Folder structure
 Shiny (R) with renv:
@@ -56,6 +54,7 @@ my_shiny_app/
 ├── data/                   # Data files
 │   ├── raw/                # Original data files
 │   └── processed/          # Cleaned data files
+├── pages/                  # Individual pages (as seen in the header)
 ├── R/                      # Helper functions (no modules)
 │   ├── data_functions.R    # Data processing functions
 │   ├── plot_functions.R    # Plotting functions

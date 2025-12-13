@@ -3,10 +3,6 @@ source("pages/projects/tabs/details.R", local = TRUE)
 
 # server that creates a per-session shared reactiveValues and passes it to both tab servers
 server_projects <- function(input, output, session, rv) {
-  # rv <- reactiveValues(
-  #   selection = if (exists("p_graph_selection")) p_graph_selection else "All researchers",
-  #   fields = if (exists("p_graph_project_fields")) p_graph_project_fields else c()
-  # )
 
   # pass session and shared rv into both page servers so they stay synchronized
   server_graph_projects_page(input, output, session, rv)

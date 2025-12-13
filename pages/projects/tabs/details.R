@@ -1,4 +1,3 @@
-# ...existing code...
 ### Parameters
 # p_researcher_name <- "Kathleen Bailey"
 p_project_fields <- c("Circular Economy", "Digital Education", "BioTech", "Cybersecurity")
@@ -127,4 +126,3 @@ server_details_projects_page <- function(input, output, session, rv) {
     }
   })
 }
-# ...existing code...

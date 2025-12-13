@@ -717,15 +717,12 @@ server_graph_projects_page <- function(input, output, session, rv) {
       network <- network %>% visGroups(groupname = "Project", color = list(background = "#2196F3", border = "#2196F3"))
     }
     if ("Funding Company" %in% nodes$group) {
-      # network <- network %>% visGroups(groupname = "Funding Company", color = list(background = "#B83027", border = "#B83027"))
       network <- network %>% visGroups(groupname = "Funding Company", color = list(background = "#FF0000", border = "#FF0000"))
     }
     if ("Steering Committee Company" %in% nodes$group) {
-      # network <- network %>% visGroups(groupname = "Steering Committee Company", color = list(background = "#F44336", border = "#F44336"))
       network <- network %>% visGroups(groupname = "Steering Committee Company", color = list(background = "#FF0000", border = "#FF0000"))
     }
     if ("Participating Company" %in% nodes$group) {
-      # network <- network %>% visGroups(groupname = "Participating Company", color = list(background = "#F77777", border = "#F77777"))
       network <- network %>% visGroups(groupname = "Participating Company", color = list(background = "#FF0000", border = "#FF0000"))
     }
 
