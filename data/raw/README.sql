@@ -70,6 +70,4 @@ CREATE TABLE Research_Participation (
     FOREIGN KEY (researcher_id) REFERENCES Researchers(employee_id)
 );
 
--- I want the shortest path between two employees or an employee which is looking to contact a company in a certain sector,...
--- What can you get out of the project description? (LLM/RAG/PGVector?)
 
