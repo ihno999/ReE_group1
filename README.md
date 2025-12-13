@@ -39,6 +39,8 @@ Install required packages:
 
 - `R> renv::restore()`
 
+Load data (see 'Data' section)
+
 Run the app with `R> shiny::runApp()`
 
 # Data
