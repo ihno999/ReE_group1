@@ -2,6 +2,25 @@
 
 An interactive dashboard to visualize the structure and relationships within an organization. The dashboard should provide insights into expertise areas, teams, projects, and external contacts . A key goal is to enable an overview of the research group’s activities  (projects, staff involvement, external collaborations) and to allow exploration of relationships, such as finding the shortest path between two individuals.
 
+# What does the application do, and why?
+
+Our application allows the customer to explore the relationships between researchers, projects, and companies through intuitive visualizations. The goal is to help our customer identify the right people for new projects by showing who has relevant expertise and connections. This enables better resource allocation and helps identify potential collaborators when starting new initiatives.
+
+# Key features
+## 1. Interactive Network Visualization (Researchers/Graph)
+
+- A network graph showing connections between researchers, projects, and companies. It provides an intuitive overview of the entire relationship networks.
+- Filtering options: By individual researcher, company and by project field
+
+## 2. Researcher Detail (Researchers/Researcher Details)
+
+- The researcher details page shows the distribution of how much companies were involved with the certain project fields for a given researcher.
+
+## 3. Contact information (Companies/Company & Companies/People)
+
+- The contact page is where you can filter by company/researcher and their projects to get the contacts details between the companies contact and the researcher
+
+
 # Setup
 > `R>` before a command means it should be run from an R console.
 
@@ -22,7 +41,7 @@ Run the app with `R> shiny::runApp()`
 
 
 # Developers
-- Brecht De Roover,
+- Brecht De Roover
 - Ihno Van de Sande
 - Matej Vesel
 
