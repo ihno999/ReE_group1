@@ -44,7 +44,13 @@ Run the app with `R> shiny::runApp()`
 # Data
 
 Data can be found in `data/raw` folder. It was loaded using DuckDB, as you can see in `global.R`.\
-You can get the data from one of the 3 students. They will give you a zip-folder with the data that needs to be unpacked and put in the root folder of this project. (see folfder structure of project)
+You can get the data from one of the 3 students. They will give you a zip-folder with the data that needs to be unpacked and put in the root folder of this project. (see folfder structure of project)\
+
+- Data is loaded from multiple CSV files (projects, researchers, research groups, etc.).
+- All datasets are registered in an in-memory DuckDB database for efficient processing.
+- SQL queries are used to join tables, filter data, and compute aggregates for the dashboard (see data_sql_queries.R file).
+- Minor preprocessing is applied (merging tables, renaming columns for clarity).
+- The processed data is directly used for the network graph, bar chart, and tables in the Shiny app.
 
 # Developers
 
